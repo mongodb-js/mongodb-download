@@ -1,0 +1,28 @@
+{
+  "name": "mongodb-download",
+  "version": "1.0.0",
+  "description": "download mongodb prebuilt packages from mongodb",
+  "main": "index.js",
+  "bin": "cli.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/winfinit/mongodb-download.git"
+  },
+  "keywords": [
+    "mongodb",
+    "download"
+  ],
+  "author": "Roman Jurkov <winfinit@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/winfinit/mongodb-download/issues"
+  },
+  "dependencies": {
+    "yargs": "^3.26.0",
+    "debug": "^2.2.0"
+  },
+  "homepage": "https://github.com/winfinit/mongodb-download#readme"
+}
