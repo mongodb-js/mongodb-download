@@ -4,8 +4,7 @@ var fs = require('fs');
 var path = require('path');
 var debug = require('debug')('mongodb-download');
 // get os
-var DOWNLOAD_URI = "https://fastdl.mongodb.org"; //osx/mongodb-osx-x86_64-3.0.6.tgz";
-
+var DOWNLOAD_URI = "https://fastdl.mongodb.org"; 
 
 module.exports = function download (opts, cb) {
 	var mongo_platform = opts.platform || undefined;
@@ -36,6 +35,12 @@ module.exports = function download (opts, cb) {
 	debug("selected platform %s", mongo_platform);
 	DOWNLOAD_URI += "/" + mongo_platform;
 
+	var cr_return = "";
+	if ( platform === "win32" ) {
+		cr_return = "\033[0G";
+	} else {
+		cr_return = "\r";
+	}
 
 	var mongo_arch = opts.arch || undefined;
 
@@ -96,13 +101,39 @@ module.exports = function download (opts, cb) {
 	}
 	debug("download directory: %s", temp_dir);
 	var download_location = path.resolve(download_dir, name);
+	debug("download complete path: %s", download_location);
 
+	var display_progress = opts.display_progress || false;
 	var file = fs.createWriteStream(download_location);
 	var request = http.get(DOWNLOAD_URI, function(response) {
+		var cur = 0;
+		var len = parseInt(response.headers['content-length'], 10);
+		var total = len / 1048576;
+
 	  	response.pipe(file);
 	  	file.on('finish', function() {
-      		file.close(cb);
+      		file.close(function() {
+      			cb(null, download_location);
+      		});
     	});
+
+	  	if ( display_progress ) {
+	  		response.on("data", function(chunk) {
+		        cur += chunk.length;
+		        var percent_complete = (100.0 * cur / len).toFixed(1);
+		        var mb_complete = (cur / 1048576).toFixed(1);
+		        var text_to_print = "Completed: " + percent_complete + 
+		        	"% (" + mb_complete + "mb / " + total.toFixed(1) + "mb)" + 
+		        	cr_return;
+		        process.stdout.write(text_to_print);
+        	});
+	  	}
+
+
+        request.on("error", function(e){
+        	debug("request error:", e);
+        	cb(e, null);
+        });
 	});
 }
 
