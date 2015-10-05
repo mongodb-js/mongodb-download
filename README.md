@@ -1,4 +1,4 @@
-# electron-download
+# mongodb-download
 
 [![NPM](https://nodei.co/npm/mongodb-download.png)](https://nodei.co/npm/mongodb-download/)
 
