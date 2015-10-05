@@ -18,7 +18,7 @@ download({
   version: '3.0.6',
   arch: 'ia32',
   platform: 'win32',
-  download_dir: './temp_download' // defaults to os.mongodb()
+  download_dir: './temp_download' // defaults to os.tmpdir()
 }, function (err, location) {
   // location will be the path of the archive that it downloaded.
 })
