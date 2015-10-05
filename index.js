@@ -92,7 +92,7 @@ module.exports = function download (opts, cb) {
 	DOWNLOAD_URI += "/" + name;
 	debug("final download URI: %s", DOWNLOAD_URI);
 
-	var temp_dir = os.tmpdir();
+	var temp_dir = opts.download_dir || os.tmpdir();
 	var download_dir = path.resolve(temp_dir, 'mongodb-download');
 	// create dir
 
@@ -129,7 +129,6 @@ module.exports = function download (opts, cb) {
         	});
 	  	}
 
-
         request.on("error", function(e){
         	debug("request error:", e);
         	cb(e, null);
@@ -155,20 +154,3 @@ https://fastdl.mongodb.org/linux/mongodb-linux-i686-3.0.6.tgz
 https://fastdl.mongodb.org/win32/mongodb-win32-x86_64-3.0.6.zip
 https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.0.6.zip
 */
-
-// // find OS prefix for download uri
-
-
-
-// // ge
-// var temp_dir = os.tmpdir();
-
-
-// var file = fs.createWriteStream("file.jpg");
-// var request = http.get("http://i3.ytimg.com/vi/J---aiyznGQ/mqdefault.jpg", function(response) {
-//   response.pipe(file);
-// });
-
-
-
-// console.log(temp_dir);
