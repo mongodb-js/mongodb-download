@@ -74,14 +74,14 @@ module.exports = function download (opts, cb) {
 
 	var name = "mongodb-" + mongo_platform + "-" + mongo_arch;
 
-	if ( mongo_arch === "linux" ) {
+	if ( mongo_platform === "linux" ) {
 		// append distro
 	} else {
 		name += "-" + mongo_version;
 	}
 
 	var mongo_archive = "";
-	if ( mongo_arch === "win32" ) {
+	if ( mongo_platform === "win32" ) {
 		mongo_archive = "zip";
 	} else {
 		mongo_archive = "tgz";
