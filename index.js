@@ -111,7 +111,6 @@ module.exports = function download (opts, cb) {
 		debug("sending file from cache");
 		cb(null, download_location);
 	} else {
-		var display_progress = opts.display_progress || false;
 		var file = fs.createWriteStream(temp_download_location);
 		var request = http.get(DOWNLOAD_URI, function(response) {
 			var cur = 0;
@@ -126,17 +125,15 @@ module.exports = function download (opts, cb) {
 	      		});
 	    	});
 
-		  	if ( display_progress ) {
-		  		response.on("data", function(chunk) {
-			        cur += chunk.length;
-			        var percent_complete = (100.0 * cur / len).toFixed(1);
-			        var mb_complete = (cur / 1048576).toFixed(1);
-			        var text_to_print = "Completed: " + percent_complete + 
-			        	"% (" + mb_complete + "mb / " + total.toFixed(1) + "mb)" + 
-			        	cr_return;
-			        process.stdout.write(text_to_print);
-	        	});
-		  	}
+	  		response.on("data", function(chunk) {
+		        cur += chunk.length;
+		        var percent_complete = (100.0 * cur / len).toFixed(1);
+		        var mb_complete = (cur / 1048576).toFixed(1);
+		        var text_to_print = "Completed: " + percent_complete + 
+		        	"% (" + mb_complete + "mb / " + total.toFixed(1) + "mb)" + 
+		        	cr_return;
+		        process.stdout.write(text_to_print);
+        	});
 
 	        request.on("error", function(e){
 	        	debug("request error:", e);
