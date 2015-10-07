@@ -3,6 +3,7 @@ var http = require('https');
 var fs = require('fs');
 var path = require('path');
 var debug = require('debug')('mongodb-download');
+var getos = require('getos');
 // get os
 var DOWNLOAD_URI = "https://fastdl.mongodb.org"; 
 
@@ -43,27 +44,24 @@ module.exports = function download (opts, cb) {
 		cr_return = "\r";
 	}
 
-	var mongo_arch = opts.arch || undefined;
+	var arch = opts.arch || os.arch();
 
-	if (! mongo_arch ) {
-		var arch = os.arch()
-
-		if ( arch === "ia32" ) {
-			if ( platform === "linux" ) {
-				mongo_arch = "i686";
-			} else if ( platform === "win32" ) {
-				mongo_arch = "i386";
-			} else {
-				debug("unsupported platform and os combination");
-				throw new Error("unsupported architecture");
-			}
-		} else if ( arch === "x64" ) {
-			mongo_arch = "x86_64";
+	if ( arch === "ia32" ) {
+		if ( platform === "linux" ) {
+			mongo_arch = "i686";
+		} else if ( platform === "win32" ) {
+			mongo_arch = "i386";
 		} else {
-			debug("unsupported architecture");
+			debug("unsupported platform and os combination");
 			throw new Error("unsupported architecture");
 		}
+	} else if ( arch === "x64" ) {
+		mongo_arch = "x86_64";
+	} else {
+		debug("unsupported architecture");
+		throw new Error("unsupported architecture, ia32 and x64 are the only valid options");
 	}
+	
 	debug("selected architecture %s", mongo_arch);
 
 	var mongo_version = opts.version || undefined;
@@ -76,10 +74,62 @@ module.exports = function download (opts, cb) {
 
 	if ( mongo_platform === "linux" ) {
 		// append distro
+		getos(function(e, os) {
+			if(e) {
+				debug("error", e);
+				throw e;
+			}
+			if ( /ubuntu/i.test(os.dist) ) {
+				name += "-ubuntu";
+				if ( os.release == "14.04" ) {
+					name += "1404";
+				} else if ( os.release == "12.04" ) {
+					name += "1204";
+				} else if ( os.release == "14.10" ) {
+					name += "1410-clang";
+				} else {
+					throw new Error("unsupported release of Ubuntu");
+				}
+			} else if ( /suse/i.test(os.dist) ) {
+				name += "-suse";
+				if ( /^11/.test(os.release) ) {
+					name += "11";
+				} else {
+					throw new Error("unsupported release of SUSE");
+				}
+			} else if ( /rhel/i.test(os.dist) ) {
+				name += "-rhel";
+				if ( /^7/.test(os.release) ) {
+					name += "70";
+				} else if ( /^6/.test(os.release) ) {
+					name += "62";
+				} else if ( /^5/.test(os.release) ) {
+					name += "55";
+				} else {
+					throw new Error("unsupported release of RHEL");
+				}
+			} else if ( /debian/i.test(os.dist) ) {
+				name += "-suse";
+				if ( /^7/.test(os.release) ) {
+					name += "71";
+				} else {
+					throw new Error("unsupported release of Debian");
+				}
+			} else {
+				throw new Error("unsupported linux distribution");
+			}
+			continueProcess();
+			name += "-" + mongo_version;
+		});
 	} else {
 		name += "-" + mongo_version;
+		continueProcess();
 	}
 
+
+}
+
+function continueProcess() {
 	var mongo_archive = "";
 	if ( mongo_platform === "win32" ) {
 		mongo_archive = "zip";
@@ -143,7 +193,7 @@ module.exports = function download (opts, cb) {
 
 	}
 }
-
+				
 
 /*
 https://fastdl.mongodb.org/osx/mongodb-osx-x86_64-3.0.6.tgz

@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "yargs": "^3.26.0",
-    "debug": "^2.2.0"
+    "debug": "^2.2.0",
+    "getos": "^2.4.0"
   },
   "homepage": "https://github.com/winfinit/mongodb-download#readme"
 }
