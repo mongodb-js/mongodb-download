@@ -7,9 +7,9 @@ var getos = require('getos');
 // get os
 var DOWNLOAD_URI = "https://fastdl.mongodb.org"; 
 
-module.exports = function download (opts, cb) {
+module.exports = function (opts, cb) {
 
-	var platform = opts.platform || os.platform();;
+	var platform = opts.platform || os.platform();
 
 	var mongo_platform = "";
 
@@ -141,8 +141,10 @@ module.exports = function download (opts, cb) {
 		var download_dir = path.resolve(temp_dir, 'mongodb-download');
 		// create dir
 
-		if (!fs.existsSync(download_dir)){
+		try {
 	    	fs.mkdirSync(download_dir);
+		} catch (e) {
+		    if (e.code !== "EEXIST" ) throw e;
 		}
 
 		debug("download directory: %s", temp_dir);
@@ -151,41 +153,43 @@ module.exports = function download (opts, cb) {
 		var temp_download_location = path.resolve(download_dir, name + ".in_progress");
 		debug("download complete path: %s", download_location);
 
-		if ( fs.existsSync(download_location) ) {
+		try {
+	        var stats = fs.lstatSync(download_location);
 			debug("sending file from cache");
-			cb(null, download_location);
-		} else {
-			var file = fs.createWriteStream(temp_download_location);
-			var request = http.get(DOWNLOAD_URI, function(response) {
-				var cur = 0;
-				var len = parseInt(response.headers['content-length'], 10);
-				var total = len / 1048576;
+			return cb(null, download_location);
+	    } catch (e) {
+	        if ( e.code !== "ENOENT" ) throw e;
+	    }
 
-			  	response.pipe(file);
-			  	file.on('finish', function() {
-		      		file.close(function() {
-		      			fs.renameSync(temp_download_location, download_location);
-		      			cb(null, download_location);
-		      		});
-		    	});
+		var file = fs.createWriteStream(temp_download_location);
+		var request = http.get(DOWNLOAD_URI, function(response) {
+			var cur = 0;
+			var len = parseInt(response.headers['content-length'], 10);
+			var total = len / 1048576;
 
-		  		response.on("data", function(chunk) {
-			        cur += chunk.length;
-			        var percent_complete = (100.0 * cur / len).toFixed(1);
-			        var mb_complete = (cur / 1048576).toFixed(1);
-			        var text_to_print = "Completed: " + percent_complete + 
-			        	"% (" + mb_complete + "mb / " + total.toFixed(1) + "mb)" + 
-			        	cr_return;
-			        process.stdout.write(text_to_print);
-	        	});
+		  	response.pipe(file);
+		  	file.on('finish', function() {
+	      		file.close(function() {
+	      			fs.renameSync(temp_download_location, download_location);
+	      			cb(null, download_location);
+	      		});
+	    	});
 
-		        request.on("error", function(e){
-		        	debug("request error:", e);
-		        	cb(e, null);
-		        });
-			});
+	  		response.on("data", function(chunk) {
+		        cur += chunk.length;
+		        var percent_complete = (100.0 * cur / len).toFixed(1);
+		        var mb_complete = (cur / 1048576).toFixed(1);
+		        var text_to_print = "Completed: " + percent_complete + 
+		        	"% (" + mb_complete + "mb / " + total.toFixed(1) + "mb)" + 
+		        	cr_return;
+		        process.stdout.write(text_to_print);
+        	});
 
-		}
+	        request.on("error", function(e){
+	        	debug("request error:", e);
+	        	cb(e, null);
+	        });
+		});
 	}
 
 }
