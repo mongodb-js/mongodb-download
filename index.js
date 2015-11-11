@@ -175,6 +175,7 @@ module.exports = function (opts, cb) {
 	      		});
 	    	});
 
+			var last_stdout;
 	  		response.on("data", function(chunk) {
 		        cur += chunk.length;
 		        var percent_complete = (100.0 * cur / len).toFixed(1);
@@ -182,7 +183,10 @@ module.exports = function (opts, cb) {
 		        var text_to_print = "Completed: " + percent_complete + 
 		        	"% (" + mb_complete + "mb / " + total.toFixed(1) + "mb)" + 
 		        	cr_return;
-		        process.stdout.write(text_to_print);
+				if (last_stdout !== text_to_print) {
+					last_stdout = text_to_print;
+					process.stdout.write(text_to_print);
+				}
         	});
 
 	        request.on("error", function(e){
