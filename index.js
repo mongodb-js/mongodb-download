@@ -94,7 +94,7 @@ module.exports = function (opts, cb) {
 				} else {
 					throw new Error("unsupported release of SUSE");
 				}
-			} else if ( /rhel/i.test(os.dist) || /centos/i.test(os.dist) ) {
+			} else if ( /rhel/i.test(os.dist) || /centos/i.test(os.dist) || /scientific/i.test(os.dist) ) {
 				name += "-rhel";
 				if ( /^7/.test(os.release) ) {
 					name += "70";
