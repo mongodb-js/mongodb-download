@@ -85,14 +85,14 @@ module.exports = function (opts, cb) {
 				} else if ( os.release == "14.10" ) {
 					name += "1410-clang";
 				} else {
-					throw new Error("unsupported release of Ubuntu");
+					throw new Error("unsupported release of Ubuntu" + os.release);
 				}
 			} else if ( /suse/i.test(os.dist) ) {
 				name += "-suse";
 				if ( /^11/.test(os.release) ) {
 					name += "11";
 				} else {
-					throw new Error("unsupported release of SUSE");
+					throw new Error("unsupported release of SUSE " + os.release);
 				}
 			} else if ( /rhel/i.test(os.dist) || /centos/i.test(os.dist) || /scientific/i.test(os.dist) ) {
 				name += "-rhel";
@@ -103,14 +103,14 @@ module.exports = function (opts, cb) {
 				} else if ( /^5/.test(os.release) ) {
 					name += "55";
 				} else {
-					throw new Error("unsupported release of RHEL");
+					throw new Error("unsupported release of RHEL " + os.release);
 				}
 			} else if ( /debian/i.test(os.dist) ) {
 				name += "-suse";
 				if ( /^7/.test(os.release) ) {
 					name += "71";
 				} else {
-					throw new Error("unsupported release of Debian");
+					throw new Error("unsupported release of Debian " + os.release);
 				}
 			} else {
 				throw new Error("unsupported linux distribution");
