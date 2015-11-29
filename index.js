@@ -76,6 +76,7 @@ module.exports = function (opts, cb) {
 				debug("error", e);
 				throw e;
 			}
+			debug("os dump", os);
 			if ( /ubuntu/i.test(os.dist) ) {
 				name += "-ubuntu";
 				if ( os.release == "14.04" ) {
@@ -105,6 +106,19 @@ module.exports = function (opts, cb) {
 				} else {
 					throw new Error("unsupported release of RHEL " + os.release);
 				}
+			} else if ( /fedora/i.test(os.dist) ) {
+				// based on https://fedoraproject.org/wiki/Red_Hat_Enterprise_Linux?rd=RHEL#History
+				name += "-rhel";
+				var fedora_version = Number(os.release);
+				if ( fedora_version > 18 ) {
+					name += "70";
+				} else if ( fedora_version < 19 && fedora_version >= 12 ) {
+					name += "62";
+				} else if ( fedora_version < 12 && fedora_version >= 6 ) {
+					name += "55";
+				} else {
+					throw new Error("unsupported release of RHEL " + os.release);
+				}
 			} else if ( /debian/i.test(os.dist) ) {
 				name += "-suse";
 				if ( /^7/.test(os.release) ) {
@@ -113,7 +127,7 @@ module.exports = function (opts, cb) {
 					throw new Error("unsupported release of Debian " + os.release);
 				}
 			} else {
-				throw new Error("unsupported linux distribution");
+				throw new Error("unsupported linux distribution " + JSON.stringify(os));
 			}
 			name += "-" + mongo_version;
 			continueProcess();
