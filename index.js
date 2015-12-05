@@ -120,8 +120,8 @@ module.exports = function (opts, cb) {
 					throw new Error("unsupported release of RHEL " + os.release);
 				}
 			} else if ( /debian/i.test(os.dist) ) {
-				name += "-suse";
-				if ( /^7/.test(os.release) ) {
+				name += "-debian";
+				if ( /^(7|8)/.test(os.release) ) {
 					name += "71";
 				} else {
 					throw new Error("unsupported release of Debian " + os.release);
