@@ -23,6 +23,9 @@ module.exports = function (opts, cb) {
 		case "linux":
 			mongo_platform = "linux";
 			break;
+		case "elementary OS":	//os.platform() doesn't return linux for elementary OS.
+			mongo_platform = "linux";
+			break;
 		case "sunos":
 			mongo_platform = "sunos5";
 			break;
@@ -88,6 +91,11 @@ module.exports = function (opts, cb) {
 				} else {
 					throw new Error("unsupported release of Ubuntu" + os.release);
 				}
+			} else if ( /elementary OS/i.test(os.dist) ) {
+				//use ubuntu version since Elementary OS Freya is based on Ubuntu 14.04
+				//unfortunately os didn't seem to contain release field for Elementary OS.
+				name += "-ubuntu";
+				name += "1404";
 			} else if ( /suse/i.test(os.dist) ) {
 				name += "-suse";
 				if ( /^11/.test(os.release) ) {
