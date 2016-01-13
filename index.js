@@ -72,7 +72,7 @@ module.exports = function (opts, cb) {
 
 	var name = "mongodb-" + mongo_platform + "-" + mongo_arch;
 
-	if ( mongo_platform === "linux" ) {
+	if ( mongo_platform === "linux" && mongo_arch !== "i686" ) {
 		// append distro
 		getos(function(e, os) {
 			if(e) {
