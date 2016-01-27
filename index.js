@@ -89,7 +89,7 @@ module.exports = function (opts, cb) {
 					name += "1404";
 				} else if ( os.release == "12.04" ) {
 					name += "1204";
-				} else if ( os.release == "14.10" && major_version > 14) {
+				} else if ( os.release == "14.10" || major_version > 14) {
 					name += "1410-clang";
 				} else {
 					throw new Error("unsupported release of Ubuntu" + os.release);
