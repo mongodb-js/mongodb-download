@@ -82,11 +82,14 @@ module.exports = function (opts, cb) {
 			debug("os dump", os);
 			if ( /ubuntu/i.test(os.dist) ) {
 				name += "-ubuntu";
+				var ubuntu_version = os.release.split('.');
+                                var major_version = ubuntu_version[0];
+                                var minor_version = ubuntu_version[1];
 				if ( os.release == "14.04" ) {
 					name += "1404";
 				} else if ( os.release == "12.04" ) {
 					name += "1204";
-				} else if ( os.release == "14.10" ) {
+				} else if ( os.release == "14.10" && major_version > 14) {
 					name += "1410-clang";
 				} else {
 					throw new Error("unsupported release of Ubuntu" + os.release);
