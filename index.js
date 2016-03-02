@@ -168,7 +168,7 @@ module.exports = function (opts, cb) {
 		// create dir
 
 		try {
-	    	fs.mkdirSync(download_dir);
+	    	    fs.mkdirSync(download_dir);
 		} catch (e) {
 		    if (e.code !== "EEXIST" ) throw e;
 		}
@@ -188,7 +188,12 @@ module.exports = function (opts, cb) {
 	    }
 
 		var file = fs.createWriteStream(temp_download_location);
-		var request = http.get(DOWNLOAD_URI, function(response) {
+
+                var http_opts = opts.http_opts || {};
+                http_opts.uri = DOWNLOAD_URI;
+
+                debug("http opts:", http_opts);
+		var request = http.get(http_opts, function(response) {
 			var cur = 0;
 			var len = parseInt(response.headers['content-length'], 10);
 			var total = len / 1048576;

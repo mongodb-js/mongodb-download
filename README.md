@@ -18,7 +18,8 @@ download({
   version: '3.0.6',
   arch: 'ia32',
   platform: 'win32',
-  download_dir: './temp_download' // defaults to os.tmpdir()
+  download_dir: './temp_download', // defaults to os.tmpdir()
+  http: {} // extra options that one would want to pass to http request
 }, function (err, location) {
   // location will be the path of the archive that it downloaded.
 })
