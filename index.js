@@ -93,7 +93,7 @@ module.exports = function (opts, cb) {
 				} else if ( os.release == "14.10" ) {
 					name += "1410-clang";
 				} else {
-                                        name += "-" + mongo_version;
+                                        debug("using legacy release");
 				}
 			} else if ( /elementary OS/i.test(os.dist) ) {
 				//use ubuntu version since Elementary OS Freya is based on Ubuntu 14.04
@@ -105,7 +105,7 @@ module.exports = function (opts, cb) {
 				if ( /^11/.test(os.release) ) {
 					name += "11";
 				} else {
-                                        name += "-" + mongo_version;
+                                        debug("using legacy release");
 				}
 			} else if ( /rhel/i.test(os.dist) || /centos/i.test(os.dist) || /scientific/i.test(os.dist) ) {
 				name += "-rhel";
@@ -116,7 +116,7 @@ module.exports = function (opts, cb) {
 				} else if ( /^5/.test(os.release) ) {
 					name += "55";
 				} else {
-                                        name += "-" + mongo_version;
+                                        debug("using legacy release");
 				}
 			} else if ( /fedora/i.test(os.dist) ) {
 				// based on https://fedoraproject.org/wiki/Red_Hat_Enterprise_Linux?rd=RHEL#History
@@ -129,7 +129,7 @@ module.exports = function (opts, cb) {
 				} else if ( fedora_version < 12 && fedora_version >= 6 ) {
 					name += "55";
 				} else {
-                                        name += "-" + mongo_version;
+                                        debug("using legacy release");
 				}
 			} else if ( /debian/i.test(os.dist) ) {
 				name += "-debian";
@@ -137,10 +137,10 @@ module.exports = function (opts, cb) {
 					name += "71";
 				} else {
 					//throw new Error("unsupported release of Debian " + os.release);
-                                        name += "-" + mongo_version;
+                                        debug("using legacy release");
 				}
 			} else {
-                                name += "-" + mongo_version;
+                                debug("using legacy release");
 			}
 			name += "-" + mongo_version;
 			continueProcess();
