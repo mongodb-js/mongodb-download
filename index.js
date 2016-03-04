@@ -4,6 +4,7 @@ var fs = require('fs');
 var path = require('path');
 var debug = require('debug')('mongodb-download');
 var getos = require('getos');
+var url = require('url');
 // get os
 var DOWNLOAD_URI = "https://fastdl.mongodb.org"; 
 
@@ -190,8 +191,11 @@ module.exports = function (opts, cb) {
 		var file = fs.createWriteStream(temp_download_location);
 
                 var http_opts = opts.http_opts || {};
-                http_opts.uri = DOWNLOAD_URI;
-
+                var download_url = url.parse(DOWNLOAD_URI);
+                http_opts.protocol = download_url.protocol;
+                http_opts.hostname = download_url.hostname;
+                http_opts.path = download_url.path;
+                
                 debug("http opts:", http_opts);
 		var request = http.get(http_opts, function(response) {
 			var cur = 0;
