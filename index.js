@@ -5,6 +5,7 @@ var path = require('path');
 var debug = require('debug')('mongodb-download');
 var getos = require('getos');
 var url = require('url');
+var HttpsProxyAgent = require('https-proxy-agent');
 // get os
 var DOWNLOAD_URI = "https://fastdl.mongodb.org"; 
 
@@ -195,7 +196,10 @@ module.exports = function (opts, cb) {
                 http_opts.protocol = download_url.protocol;
                 http_opts.hostname = download_url.hostname;
                 http_opts.path = download_url.path;
-                
+                if(process.env.HTTPS_PROXY) {
+			debug("setting proxy for request");
+			http_opts.agent = new HttpsProxyAgent(process.env.HTTPS_PROXY);
+		} 
                 debug("http opts:", http_opts);
 		var request = http.get(http_opts, function(response) {
 			var cur = 0;
