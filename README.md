@@ -4,14 +4,14 @@
 
 downloads a MongoDB release zip/tgz from MongoDB
 
-### Usage
+## Usage
 
 ```plain
 $ npm install --global mongodb-download
 $ mongodb-download --version=3.0.6
 ```
 
-### Synopsis
+## Synopsis
 
 ```
 var download = require('mongodb-download')
