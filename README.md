@@ -11,6 +11,8 @@ $ npm install --global mongodb-download
 $ mongodb-download --version=3.0.6
 ```
 
+### Synopsis
+
 ```
 var download = require('mongodb-download')
 
