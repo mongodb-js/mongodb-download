@@ -4,7 +4,7 @@
 
 downloads a MongoDB release zip/tgz from MongoDB
 
-### usage
+### Usage
 
 ```plain
 $ npm install --global mongodb-download
