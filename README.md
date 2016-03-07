@@ -15,14 +15,31 @@ $ mongodb-download --version=3.0.6
 var download = require('mongodb-download')
 
 download({
-  version: '3.0.6',
+  version: '3.0.6', 
   arch: 'ia32',
   platform: 'win32',
   download_dir: './temp_download', // defaults to os.tmpdir()
-  http: {} // extra options that one would want to pass to http request
+  http_opts: {} // extra options that one would want to pass to http request
 }, function (err, location) {
   // location will be the path of the archive that it downloaded.
 })
 ```
 
 if you don't specify `arch` or `platform` args it will use `require('os')` to get them from the current OS. specifying `version` is mandatory.
+
+## Options
+
+### version (required)
+MongoDB version to download
+
+### arch (optional)
+32 or 64 bit version architecture, possible values: ia32 or x64
+
+### platform (optional)
+Target platform of a download, possible values: "win32", "darwin", "osx", "linux" or "elementary OS"  
+
+### download_dir (optional) 
+Download path
+
+### http_opts (optional)
+Additional options that are going to be passed to http library, such as "agent".
