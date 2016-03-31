@@ -13,7 +13,7 @@ $ mongodb-download --version=3.0.6
 
 ## Synopsis
 
-```
+```javascript
 var download = require('mongodb-download')
 
 download({
@@ -45,3 +45,21 @@ Download path
 
 ### http_opts (optional)
 Additional options that are going to be passed to http library, such as "agent".
+
+```javascript
+var download = require('mongodb-download');
+var https_proxy_agent = require('https-proxy-agent');
+
+var proxy_url = "https://localhost:3128";
+var proxy_agent = new https_proxy_agent(proxy_url);
+
+download({
+  version: '3.0.6', 
+  http_opts: {
+  	agent: proxy_agent
+  } 
+}, function (err, location) {
+  // location will be the path of the archive that it downloaded.
+})
+
+```
