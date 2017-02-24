@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var os = require('os');
 var http = require('https');
 var fs = require('fs');
@@ -6,6 +7,9 @@ var path = require('path');
 var debug = require('debug')('mongodb-download');
 var getos = require('getos');
 var url = require('url');
+var decompress = require('decompress');
+var request = require('request-promise');
+var md5File = require('md5-file');
 var DOWNLOAD_URI = "https://fastdl.mongodb.org";
 var MONGODB_VERSION = "latest";
 var MongoDBDownload = (function () {
@@ -45,7 +49,19 @@ var MongoDBDownload = (function () {
             _this.getArchiveName().then(function (archiveName) {
                 var downloadDir = _this.getDownloadDir();
                 var fullPath = path.resolve(downloadDir, archiveName);
+                debug("getDownloadLocation(): " + fullPath);
                 resolve(fullPath);
+            });
+        });
+    };
+    MongoDBDownload.prototype.getExtractLocation = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getMD5Hash().then(function (hash) {
+                var downloadDir = _this.getDownloadDir();
+                var extractLocation = path.resolve(downloadDir, hash);
+                debug("getExtractLocation(): " + extractLocation);
+                resolve(extractLocation);
             });
         });
     };
@@ -55,7 +71,38 @@ var MongoDBDownload = (function () {
             _this.getArchiveName().then(function (archiveName) {
                 var downloadDir = _this.getDownloadDir();
                 var fullPath = path.resolve(downloadDir, archiveName + ".downloading");
+                debug("getTempDownloadLocation(): " + fullPath);
                 resolve(fullPath);
+            });
+        });
+    };
+    MongoDBDownload.prototype.downloadAndExtract = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.download().then(function (archive) {
+                _this.extract().then(function (location) {
+                    resolve('downloaded and extracted');
+                });
+            });
+        });
+    };
+    MongoDBDownload.prototype.extract = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getExtractLocation().then(function (extractLocation) {
+                _this.isExtractPresent().then(function (extractPresent) {
+                    if (extractPresent === true) {
+                        resolve(extractLocation);
+                    }
+                    else {
+                        _this.getDownloadLocation().then(function (mongoDBArchive) {
+                            decompress(mongoDBArchive, extractLocation).then(function (files) {
+                                debug("extract(): " + extractLocation);
+                                resolve(extractLocation);
+                            });
+                        });
+                    }
+                });
             });
         });
     };
@@ -66,24 +113,89 @@ var MongoDBDownload = (function () {
             var downloadLocationPromise = _this.getDownloadLocation();
             var tempDownloadLocationPromise = _this.getTempDownloadLocation();
             var createDownloadDirPromise = _this.createDownloadDir();
+            var getMD5HashPromise = _this.getMD5Hash();
             Promise.all([
                 httpOptionsPromise,
                 downloadLocationPromise,
-                tempDownloadLocationPromise
+                tempDownloadLocationPromise,
             ]).then(function (values) {
                 var httpOptions = values[0];
                 var downloadLocation = values[1];
                 var tempDownloadLocation = values[2];
+                _this.isDownloadPresent().then(function (isDownloadPresent) {
+                    if (isDownloadPresent === true) {
+                        debug("download(): " + downloadLocation);
+                        resolve(downloadLocation);
+                    }
+                    else {
+                        _this.httpDownload(httpOptions, downloadLocation, tempDownloadLocation).then(function (location) {
+                            debug("download(): " + downloadLocation);
+                            resolve(location);
+                        }, function (e) {
+                            reject(e);
+                        });
+                    }
+                });
+            });
+        });
+    };
+    // TODO: needs refactoring
+    MongoDBDownload.prototype.isDownloadPresent = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getDownloadLocation().then(function (downloadLocation) {
                 if (_this.locationExists(downloadLocation) === true) {
-                    resolve(downloadLocation);
-                }
-                else {
-                    _this.httpDownload(httpOptions, downloadLocation, tempDownloadLocation).then(function (location) {
-                        resolve(location);
-                    }, function (e) {
-                        reject(e);
+                    _this.getMD5Hash().then(function (downloadHash) {
+                        md5File(downloadLocation, function (err, hash) {
+                            if (err) {
+                                throw err;
+                            }
+                            if (hash === downloadHash) {
+                                debug("isDownloadPresent(): true");
+                                resolve(true);
+                            }
+                            else {
+                                debug("isDownloadPresent(): false");
+                                resolve(false);
+                            }
+                            console.log("The MD5 sum of LICENSE.md is: " + hash);
+                        });
                     });
                 }
+                else {
+                    debug("isDownloadPresent(): false");
+                    resolve(false);
+                }
+            });
+        });
+    };
+    MongoDBDownload.prototype.isExtractPresent = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getMD5Hash().then(function (downloadHash) {
+                var downloadDir = _this.getDownloadDir();
+                _this.getExtractLocation().then(function (extractLocation) {
+                    var present = _this.locationExists(extractLocation);
+                    debug("isExtractPresent(): " + present);
+                    resolve(present);
+                });
+            });
+        });
+    };
+    MongoDBDownload.prototype.getMD5Hash = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getDownloadURIMD5().then(function (md5URL) {
+                request(md5URL).then(function (signatureContent) {
+                    debug("getDownloadMD5Hash content: " + signatureContent);
+                    var signatureMatch = signatureContent.match(/(.*?)\s/);
+                    var signature = signatureMatch[1];
+                    debug("getDownloadMD5Hash: " + signature);
+                    resolve(signature);
+                }, function (e) {
+                    console.error('unable to get signature content', e);
+                    reject(e);
+                });
             });
         });
     };
@@ -161,11 +273,21 @@ var MongoDBDownload = (function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
             var downloadURL = DOWNLOAD_URI + "/" + _this.mongoDBPlatform.getPlatform();
-            debug("Download URL for MongoDB: " + downloadURL);
             _this.getArchiveName().then(function (archiveName) {
                 downloadURL += "/" + archiveName;
-                downloadURL = url.parse(downloadURL);
-                resolve(downloadURL);
+                var downloadURLObject = url.parse(downloadURL);
+                debug("getDownloadURI (url obj returned with href): " + downloadURLObject.href);
+                resolve(downloadURLObject);
+            });
+        });
+    };
+    MongoDBDownload.prototype.getDownloadURIMD5 = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getDownloadURI().then(function (downloadURI) {
+                var downloadURIMD5 = downloadURI.href + ".md5";
+                debug("getDownloadURIMD5: " + downloadURIMD5);
+                resolve(downloadURIMD5);
             });
         });
     };

@@ -27,14 +27,21 @@ export declare class MongoDBDownload {
     getVersion(): string;
     getDownloadDir(): string;
     getDownloadLocation(): Promise<string>;
+    getExtractLocation(): Promise<string>;
     getTempDownloadLocation(): Promise<string>;
+    downloadAndExtract(): Promise<string>;
+    extract(): Promise<string>;
     download(): Promise<string>;
+    isDownloadPresent(): Promise<boolean>;
+    isExtractPresent(): Promise<boolean>;
+    getMD5Hash(): Promise<string>;
     httpDownload(httpOptions: any, downloadLocation: string, tempDownloadLocation: string): Promise<string>;
     getCrReturn(): string;
     locationExists(location: string): boolean;
     printDownloadProgress(chunk: any): void;
     getHttpOptions(): Promise<any>;
     getDownloadURI(): Promise<any>;
+    getDownloadURIMD5(): Promise<any>;
     createDownloadDir(): Promise<string>;
     getArchiveName(): Promise<string>;
 }
