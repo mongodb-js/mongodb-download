@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var os = require('os');
 var http = require('https');
-var fs = require('fs');
+var fs = require('fs-extra');
 var path = require('path');
-var debug = require('debug')('mongodb-download');
+var Debug = require('debug');
 var getos = require('getos');
 var url = require('url');
 var decompress = require('decompress');
@@ -22,6 +22,7 @@ var MongoDBDownload = (function () {
             "version": version,
             "http": http
         };
+        this.debug = Debug('mongodb-download-MongoDBDownload');
         this.mongoDBPlatform = new MongoDBPlatform(this.getPlatform(), this.getArch());
         this.options.downloadDir = path.resolve(this.options.downloadDir, 'mongodb-download');
         this.downloadProgress = {
@@ -49,7 +50,7 @@ var MongoDBDownload = (function () {
             _this.getArchiveName().then(function (archiveName) {
                 var downloadDir = _this.getDownloadDir();
                 var fullPath = path.resolve(downloadDir, archiveName);
-                debug("getDownloadLocation(): " + fullPath);
+                _this.debug("getDownloadLocation(): " + fullPath);
                 resolve(fullPath);
             });
         });
@@ -60,7 +61,7 @@ var MongoDBDownload = (function () {
             _this.getMD5Hash().then(function (hash) {
                 var downloadDir = _this.getDownloadDir();
                 var extractLocation = path.resolve(downloadDir, hash);
-                debug("getExtractLocation(): " + extractLocation);
+                _this.debug("getExtractLocation(): " + extractLocation);
                 resolve(extractLocation);
             });
         });
@@ -71,7 +72,7 @@ var MongoDBDownload = (function () {
             _this.getArchiveName().then(function (archiveName) {
                 var downloadDir = _this.getDownloadDir();
                 var fullPath = path.resolve(downloadDir, archiveName + ".downloading");
-                debug("getTempDownloadLocation(): " + fullPath);
+                _this.debug("getTempDownloadLocation(): " + fullPath);
                 resolve(fullPath);
             });
         });
@@ -80,8 +81,8 @@ var MongoDBDownload = (function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
             _this.download().then(function (archive) {
-                _this.extract().then(function (location) {
-                    resolve('downloaded and extracted');
+                _this.extract().then(function (extractLocation) {
+                    resolve(extractLocation);
                 });
             });
         });
@@ -97,7 +98,7 @@ var MongoDBDownload = (function () {
                     else {
                         _this.getDownloadLocation().then(function (mongoDBArchive) {
                             decompress(mongoDBArchive, extractLocation).then(function (files) {
-                                debug("extract(): " + extractLocation);
+                                _this.debug("extract(): " + extractLocation);
                                 resolve(extractLocation);
                             });
                         });
@@ -113,23 +114,24 @@ var MongoDBDownload = (function () {
             var downloadLocationPromise = _this.getDownloadLocation();
             var tempDownloadLocationPromise = _this.getTempDownloadLocation();
             var createDownloadDirPromise = _this.createDownloadDir();
-            var getMD5HashPromise = _this.getMD5Hash();
             Promise.all([
                 httpOptionsPromise,
                 downloadLocationPromise,
                 tempDownloadLocationPromise,
+                createDownloadDirPromise
             ]).then(function (values) {
                 var httpOptions = values[0];
                 var downloadLocation = values[1];
                 var tempDownloadLocation = values[2];
+                var downloadDirRes = values[3];
                 _this.isDownloadPresent().then(function (isDownloadPresent) {
                     if (isDownloadPresent === true) {
-                        debug("download(): " + downloadLocation);
+                        _this.debug("download(): " + downloadLocation);
                         resolve(downloadLocation);
                     }
                     else {
                         _this.httpDownload(httpOptions, downloadLocation, tempDownloadLocation).then(function (location) {
-                            debug("download(): " + downloadLocation);
+                            _this.debug("download(): " + downloadLocation);
                             resolve(location);
                         }, function (e) {
                             reject(e);
@@ -151,19 +153,18 @@ var MongoDBDownload = (function () {
                                 throw err;
                             }
                             if (hash === downloadHash) {
-                                debug("isDownloadPresent(): true");
+                                _this.debug("isDownloadPresent() md5 match: true");
                                 resolve(true);
                             }
                             else {
-                                debug("isDownloadPresent(): false");
+                                _this.debug("isDownloadPresent() md5 mismatch: false");
                                 resolve(false);
                             }
-                            console.log("The MD5 sum of LICENSE.md is: " + hash);
                         });
                     });
                 }
                 else {
-                    debug("isDownloadPresent(): false");
+                    _this.debug("isDownloadPresent() location missing: false");
                     resolve(false);
                 }
             });
@@ -176,7 +177,7 @@ var MongoDBDownload = (function () {
                 var downloadDir = _this.getDownloadDir();
                 _this.getExtractLocation().then(function (extractLocation) {
                     var present = _this.locationExists(extractLocation);
-                    debug("isExtractPresent(): " + present);
+                    _this.debug("isExtractPresent(): " + present);
                     resolve(present);
                 });
             });
@@ -187,10 +188,10 @@ var MongoDBDownload = (function () {
         return new Promise(function (resolve, reject) {
             _this.getDownloadURIMD5().then(function (md5URL) {
                 request(md5URL).then(function (signatureContent) {
-                    debug("getDownloadMD5Hash content: " + signatureContent);
+                    _this.debug("getDownloadMD5Hash content: " + signatureContent);
                     var signatureMatch = signatureContent.match(/(.*?)\s/);
                     var signature = signatureMatch[1];
-                    debug("getDownloadMD5Hash: " + signature);
+                    _this.debug("getDownloadMD5Hash: " + signature);
                     resolve(signature);
                 }, function (e) {
                     console.error('unable to get signature content', e);
@@ -218,7 +219,7 @@ var MongoDBDownload = (function () {
                     _this.printDownloadProgress(chunk);
                 });
                 request.on("error", function (e) {
-                    debug("request error:", e);
+                    _this.debug("request error:", e);
                     reject(e);
                 });
             });
@@ -236,7 +237,7 @@ var MongoDBDownload = (function () {
         var exists;
         try {
             var stats = fs.lstatSync(location);
-            debug("sending file from cache");
+            this.debug("sending file from cache");
             exists = true;
         }
         catch (e) {
@@ -264,7 +265,7 @@ var MongoDBDownload = (function () {
                 _this.options.http.protocol = downloadURI.protocol;
                 _this.options.http.hostname = downloadURI.hostname;
                 _this.options.http.path = downloadURI.path;
-                debug("getHttpOptions", _this.options.http);
+                _this.debug("getHttpOptions", _this.options.http);
                 resolve(_this.options.http);
             });
         });
@@ -276,7 +277,7 @@ var MongoDBDownload = (function () {
             _this.getArchiveName().then(function (archiveName) {
                 downloadURL += "/" + archiveName;
                 var downloadURLObject = url.parse(downloadURL);
-                debug("getDownloadURI (url obj returned with href): " + downloadURLObject.href);
+                _this.debug("getDownloadURI (url obj returned with href): " + downloadURLObject.href);
                 resolve(downloadURLObject);
             });
         });
@@ -286,7 +287,7 @@ var MongoDBDownload = (function () {
         return new Promise(function (resolve, reject) {
             _this.getDownloadURI().then(function (downloadURI) {
                 var downloadURIMD5 = downloadURI.href + ".md5";
-                debug("getDownloadURIMD5: " + downloadURIMD5);
+                _this.debug("getDownloadURIMD5: " + downloadURIMD5);
                 resolve(downloadURIMD5);
             });
         });
@@ -294,16 +295,18 @@ var MongoDBDownload = (function () {
     MongoDBDownload.prototype.createDownloadDir = function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
-            try {
-                fs.mkdirSync(_this.getDownloadDir());
-            }
-            catch (e) {
-                if (e.code !== "EEXIST")
-                    throw e;
-            }
-            finally {
-                resolve("ok");
-            }
+            var dirToCreate = _this.getDownloadDir();
+            _this.debug("createDownloadDir(): " + dirToCreate);
+            fs.ensureDir(dirToCreate, function (err) {
+                if (err) {
+                    _this.debug("createDownloadDir() error: " + err);
+                    throw err;
+                }
+                else {
+                    _this.debug("createDownloadDir(): true");
+                    resolve(true);
+                }
+            });
         });
     };
     MongoDBDownload.prototype.getArchiveName = function () {
@@ -328,6 +331,7 @@ var MongoDBDownload = (function () {
 exports.MongoDBDownload = MongoDBDownload;
 var MongoDBPlatform = (function () {
     function MongoDBPlatform(platform, arch) {
+        this.debug = Debug('mongodb-download-MongoDBPlatform');
         this.platform = this.translatePlatform(platform);
         this.arch = this.translateArch(arch, this.getPlatform());
     }
@@ -396,7 +400,7 @@ var MongoDBPlatform = (function () {
             name += "71";
         }
         else {
-            debug("using legacy release");
+            this.debug("using legacy release");
         }
         return name;
     };
@@ -413,7 +417,7 @@ var MongoDBPlatform = (function () {
             name += "55";
         }
         else {
-            debug("using legacy release");
+            this.debug("using legacy release");
         }
         return name;
     };
@@ -429,7 +433,7 @@ var MongoDBPlatform = (function () {
             name += "55";
         }
         else {
-            debug("using legacy release");
+            this.debug("using legacy release");
         }
         return name;
     };
@@ -443,7 +447,7 @@ var MongoDBPlatform = (function () {
             name += "11";
         }
         else {
-            debug("using legacy release");
+            this.debug("using legacy release");
         }
         return name;
     };
@@ -462,7 +466,7 @@ var MongoDBPlatform = (function () {
             name += "1410-clang";
         }
         else {
-            debug("using legacy release");
+            this.debug("using legacy release");
         }
         return name;
     };
@@ -479,7 +483,7 @@ var MongoDBPlatform = (function () {
             case "sunos":
                 return "sunos5";
             default:
-                debug("unsupported platform %s by MongoDB", platform);
+                this.debug("unsupported platform %s by MongoDB", platform);
                 throw new Error("unsupported OS " + platform);
         }
     };
@@ -492,7 +496,7 @@ var MongoDBPlatform = (function () {
                 return "i386";
             }
             else {
-                debug("unsupported mongo platform and os combination");
+                this.debug("unsupported mongo platform and os combination");
                 throw new Error("unsupported architecture");
             }
         }
@@ -500,7 +504,7 @@ var MongoDBPlatform = (function () {
             return "x86_64";
         }
         else {
-            debug("unsupported architecture");
+            this.debug("unsupported architecture");
             throw new Error("unsupported architecture, ia32 and x64 are the only valid options");
         }
     };

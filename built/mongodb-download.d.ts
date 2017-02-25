@@ -15,6 +15,7 @@ export declare class MongoDBDownload {
     options: IMongoDBDownloadOptions;
     mongoDBPlatform: MongoDBPlatform;
     downloadProgress: IMongoDBDownloadProgress;
+    debug: any;
     constructor({platform, arch, downloadDir, version, http}: {
         platform?: any;
         arch?: any;
@@ -42,12 +43,13 @@ export declare class MongoDBDownload {
     getHttpOptions(): Promise<any>;
     getDownloadURI(): Promise<any>;
     getDownloadURIMD5(): Promise<any>;
-    createDownloadDir(): Promise<string>;
+    createDownloadDir(): Promise<boolean>;
     getArchiveName(): Promise<string>;
 }
 export declare class MongoDBPlatform {
     platform: string;
     arch: string;
+    debug: any;
     constructor(platform: string, arch: string);
     getPlatform(): string;
     getArch(): string;

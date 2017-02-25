@@ -1,8 +1,8 @@
 const os: any = require('os');
 const http: any = require('https');
-const fs: any = require('fs');
+const fs: any = require('fs-extra');
 const path: any = require('path');
-const debug: any = require('debug')('mongodb-download');
+const Debug: any = require('debug');
 const getos: any = require('getos');
 const url: any = require('url');
 const decompress: any = require('decompress');
@@ -32,6 +32,7 @@ export class MongoDBDownload {
   options: IMongoDBDownloadOptions;
   mongoDBPlatform: MongoDBPlatform;
   downloadProgress: IMongoDBDownloadProgress;
+  debug: any;
   
   constructor( {
     platform = os.platform(),
@@ -48,6 +49,7 @@ export class MongoDBDownload {
       "http": http
     };
     
+    this.debug = Debug('mongodb-download-MongoDBDownload');
     this.mongoDBPlatform = new MongoDBPlatform(this.getPlatform(), this.getArch());
     this.options.downloadDir = path.resolve(this.options.downloadDir, 'mongodb-download');
     this.downloadProgress ={
@@ -79,7 +81,7 @@ export class MongoDBDownload {
       this.getArchiveName().then((archiveName) => {
         let downloadDir: string = this.getDownloadDir();
         let fullPath: string = path.resolve(downloadDir, archiveName);
-        debug(`getDownloadLocation(): ${fullPath}`);
+        this.debug(`getDownloadLocation(): ${fullPath}`);
         resolve(fullPath);
       });
     });
@@ -90,7 +92,7 @@ export class MongoDBDownload {
       this.getMD5Hash().then(hash => {
         let downloadDir: string = this.getDownloadDir();
         let extractLocation: string = path.resolve(downloadDir, hash);
-        debug(`getExtractLocation(): ${extractLocation}`);
+        this.debug(`getExtractLocation(): ${extractLocation}`);
         resolve(extractLocation);
       });
     });
@@ -101,7 +103,7 @@ export class MongoDBDownload {
       this.getArchiveName().then((archiveName) => {
         let downloadDir: string = this.getDownloadDir();
         let fullPath: string = path.resolve(downloadDir, `${archiveName}.downloading`);
-        debug(`getTempDownloadLocation(): ${fullPath}`);
+        this.debug(`getTempDownloadLocation(): ${fullPath}`);
         resolve(fullPath);
       });
     });
@@ -110,8 +112,8 @@ export class MongoDBDownload {
   downloadAndExtract(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.download().then((archive: string) => {
-        this.extract().then((location: string) => {
-          resolve('downloaded and extracted');
+        this.extract().then((extractLocation: string) => {
+          resolve(extractLocation);
         });
       })
     });
@@ -126,7 +128,7 @@ export class MongoDBDownload {
           } else {
             this.getDownloadLocation().then((mongoDBArchive: string) => {
               decompress(mongoDBArchive, extractLocation).then((files: any) => {
-                debug(`extract(): ${extractLocation}`);
+                this.debug(`extract(): ${extractLocation}`);
                 resolve(extractLocation);
               });
             });  
@@ -142,25 +144,26 @@ export class MongoDBDownload {
       let httpOptionsPromise: Promise<string> = this.getHttpOptions();
       let downloadLocationPromise: Promise<string> = this.getDownloadLocation();
       let tempDownloadLocationPromise: Promise<string> = this.getTempDownloadLocation();
-      let createDownloadDirPromise: Promise<string> = this.createDownloadDir();
-      let getMD5HashPromise: Promise<string> = this.getMD5Hash();
+      let createDownloadDirPromise: Promise<boolean> = this.createDownloadDir();
       
       Promise.all([
       httpOptionsPromise, 
       downloadLocationPromise,
       tempDownloadLocationPromise,
+      createDownloadDirPromise
       ]).then(values => {
         let httpOptions: any = values[0];
         let downloadLocation: string = values[1];
         let tempDownloadLocation: string = values[2];
+        let downloadDirRes: boolean = values[3];
         
         this.isDownloadPresent().then((isDownloadPresent: boolean) => {
           if ( isDownloadPresent === true ) {
-            debug(`download(): ${downloadLocation}`);
+            this.debug(`download(): ${downloadLocation}`);
             resolve(downloadLocation);
           } else {
             this.httpDownload(httpOptions, downloadLocation, tempDownloadLocation).then((location: string) => {
-              debug(`download(): ${downloadLocation}`);
+              this.debug(`download(): ${downloadLocation}`);
               resolve(location);
             }, (e) => {
               reject(e);
@@ -182,17 +185,16 @@ export class MongoDBDownload {
                 throw err;
               }
               if ( hash === downloadHash ) {
-                debug(`isDownloadPresent(): true`);
+                this.debug(`isDownloadPresent() md5 match: true`);
                 resolve(true);
               } else {
-                debug(`isDownloadPresent(): false`);
+                this.debug(`isDownloadPresent() md5 mismatch: false`);
                 resolve(false);
               }
-              console.log(`The MD5 sum of LICENSE.md is: ${hash}`);
             });
           });
         } else {
-          debug(`isDownloadPresent(): false`);
+          this.debug(`isDownloadPresent() location missing: false`);
           resolve(false);
         }
       });
@@ -205,7 +207,7 @@ export class MongoDBDownload {
         let downloadDir: string = this.getDownloadDir();
         this.getExtractLocation().then((extractLocation: string) => {
           let present: boolean = this.locationExists(extractLocation);
-          debug(`isExtractPresent(): ${present}`);
+          this.debug(`isExtractPresent(): ${present}`);
           resolve(present);
         });
       });
@@ -216,10 +218,10 @@ export class MongoDBDownload {
     return new Promise<string>((resolve, reject) => {
       this.getDownloadURIMD5().then((md5URL) => {
         request(md5URL).then((signatureContent: string) => {
-          debug(`getDownloadMD5Hash content: ${signatureContent}`);
+          this.debug(`getDownloadMD5Hash content: ${signatureContent}`);
           let signatureMatch: string[] = signatureContent.match(/(.*?)\s/);
           let signature: string = signatureMatch[1];
-          debug(`getDownloadMD5Hash: ${signature}`);
+          this.debug(`getDownloadMD5Hash: ${signature}`);
           resolve(signature);
         }, (e: any) => {
           console.error('unable to get signature content', e);
@@ -252,7 +254,7 @@ export class MongoDBDownload {
         });
         
         request.on("error", (e: any) => {
-          debug("request error:", e);
+          this.debug("request error:", e);
           reject(e);
         });
       });  
@@ -271,7 +273,7 @@ export class MongoDBDownload {
     let exists: boolean;
     try {
       let stats: any = fs.lstatSync(location);
-      debug("sending file from cache");
+      this.debug("sending file from cache");
       exists = true;
     } catch (e) {
       if (e.code !== "ENOENT") throw e;
@@ -302,7 +304,7 @@ export class MongoDBDownload {
         this.options.http.protocol = downloadURI.protocol;
         this.options.http.hostname = downloadURI.hostname;
         this.options.http.path = downloadURI.path;
-        debug("getHttpOptions", this.options.http);
+        this.debug("getHttpOptions", this.options.http);
         resolve(this.options.http);
       });
     });
@@ -314,7 +316,7 @@ export class MongoDBDownload {
       this.getArchiveName().then((archiveName) => {
         downloadURL += `/${archiveName}`;
         let downloadURLObject: any = url.parse(downloadURL);
-        debug(`getDownloadURI (url obj returned with href): ${downloadURLObject.href}`);
+        this.debug(`getDownloadURI (url obj returned with href): ${downloadURLObject.href}`);
         resolve(downloadURLObject);
       });
     });
@@ -324,21 +326,25 @@ export class MongoDBDownload {
     return new Promise<string>((resolve, reject) => {
       this.getDownloadURI().then((downloadURI: any) => {
         let downloadURIMD5: string = `${downloadURI.href}.md5`;
-        debug(`getDownloadURIMD5: ${downloadURIMD5}`);
+        this.debug(`getDownloadURIMD5: ${downloadURIMD5}`);
         resolve(downloadURIMD5);
       })
     });
   }
   
-  createDownloadDir(): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      try {
-        fs.mkdirSync(this.getDownloadDir());
-      } catch (e) {
-        if (e.code !== "EEXIST") throw e;
-      } finally {
-        resolve("ok");
-      }
+  createDownloadDir(): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
+        let dirToCreate: string = this.getDownloadDir();
+        this.debug(`createDownloadDir(): ${dirToCreate}`);
+        fs.ensureDir(dirToCreate, (err: any) => {
+          if ( err ) {
+            this.debug(`createDownloadDir() error: ${err}`);
+            throw err;
+          } else {
+            this.debug(`createDownloadDir(): true`);
+            resolve(true);
+          }
+        });
     });
   }
   
@@ -366,8 +372,10 @@ export class MongoDBDownload {
 export class MongoDBPlatform {
   platform: string;
   arch: string;
+  debug: any;
   
   constructor(platform: string, arch: string) {
+    this.debug = Debug('mongodb-download-MongoDBPlatform');
     this.platform = this.translatePlatform(platform);
     this.arch = this.translateArch(arch, this.getPlatform());
   }
@@ -434,7 +442,7 @@ export class MongoDBPlatform {
     if (/^(7|8)/.test(os.release)) {
       name += "71";
     } else {
-      debug("using legacy release");
+      this.debug("using legacy release");
     }
     return name;
   }
@@ -449,7 +457,7 @@ export class MongoDBPlatform {
     } else if (fedora_version < 12 && fedora_version >= 6) {
       name += "55";
     } else {
-      debug("using legacy release");
+      this.debug("using legacy release");
     }
     return name;
   }
@@ -463,7 +471,7 @@ export class MongoDBPlatform {
     } else if (/^5/.test(os.release)) {
       name += "55";
     } else {
-      debug("using legacy release");
+      this.debug("using legacy release");
     }
     return name;
   }
@@ -478,7 +486,7 @@ export class MongoDBPlatform {
     if (/^11/.test(os.release)) {
       name += "11";
     } else {
-      debug("using legacy release");
+      this.debug("using legacy release");
     }
     return name;
   }
@@ -495,7 +503,7 @@ export class MongoDBPlatform {
     } else if (os.release == "14.10") {
       name += "1410-clang";
     } else {
-      debug("using legacy release");
+      this.debug("using legacy release");
     }
     return name;
   }
@@ -514,7 +522,7 @@ export class MongoDBPlatform {
       case "sunos":
       return "sunos5";
       default:
-      debug("unsupported platform %s by MongoDB", platform);
+      this.debug("unsupported platform %s by MongoDB", platform);
       throw new Error(`unsupported OS ${platform}`);
     }
   }
@@ -526,13 +534,13 @@ export class MongoDBPlatform {
       } else if (mongoPlatform === "win32") {
         return "i386";
       } else {
-        debug("unsupported mongo platform and os combination");
+        this.debug("unsupported mongo platform and os combination");
         throw new Error("unsupported architecture");
       }
     } else if (arch === "x64") {
       return "x86_64";
     } else {
-      debug("unsupported architecture");
+      this.debug("unsupported architecture");
       throw new Error("unsupported architecture, ia32 and x64 are the only valid options");
     }
   }
