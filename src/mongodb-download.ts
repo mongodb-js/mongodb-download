@@ -496,14 +496,25 @@ export class MongoDBPlatform {
     let ubuntu_version: string[] = os.release.split('.');
     let major_version: number = parseInt(ubuntu_version[0]);
     let minor_version: string = ubuntu_version[1];
-    if (os.release == "14.04" || major_version > 14) {
-      name += "1404";
-    } else if (os.release == "12.04") {
+
+    if (os.release === "12.04") {
       name += "1204";
-    } else if (os.release == "14.10") {
+    } else if (os.release === "14.04") {
+      name += "1404";
+    } else if (os.release === "14.10") {
       name += "1410-clang";
+    } else if (major_version === 14) {
+      // default for major 14 to 1404
+      name += "1404";
+    } else if (os.release === "16.04") {
+      name += "1604";
+    } else if (major_version === 16) {
+      // default for major 16 to 1604
+      name += "1604";
     } else {
-      this.debug("using legacy release");
+      // this needs to default to legacy release, this is a BUG
+      this.debug("selecting default Ubuntu release 1404");
+      name += "1404";
     }
     return name;
   }
