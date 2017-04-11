@@ -356,8 +356,8 @@ export class MongoDBDownload {
       this.mongoDBPlatform.getPlatform() + "-" +
       this.mongoDBPlatform.getArch();
       
-      this.mongoDBPlatform.getOSVersionString().then((osString) => {
-        name += `-${osString}`;
+      this.mongoDBPlatform.getOSVersionString().then(osString => {
+        osString && (name += `-${osString}`);
       }, (error) => {
         // nothing to add to name ... yet
       }).then(() => {
@@ -482,13 +482,14 @@ export class MongoDBPlatform {
   }
   
   getSuseVersionString(os: any): string {
-    let name: string = "suse";
-    if (/^11/.test(os.release)) {
-      name += "11";
+    let [release]: [string | null] = os.release.match(/(^11|^12)/) || [null];
+
+    if (release) {
+      return `suse${release}`;
     } else {
       this.debug("using legacy release");
+      return '';
     }
-    return name;
   }
   
   getUbuntuVersionString(os: any): string {

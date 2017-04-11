@@ -317,7 +317,7 @@ var MongoDBDownload = (function () {
                 _this.mongoDBPlatform.getPlatform() + "-" +
                 _this.mongoDBPlatform.getArch();
             _this.mongoDBPlatform.getOSVersionString().then(function (osString) {
-                name += "-" + osString;
+                osString && (name += "-" + osString);
             }, function (error) {
                 // nothing to add to name ... yet
             }).then(function () {
@@ -442,14 +442,14 @@ var MongoDBPlatform = (function () {
         return name;
     };
     MongoDBPlatform.prototype.getSuseVersionString = function (os) {
-        var name = "suse";
-        if (/^11/.test(os.release)) {
-            name += "11";
+        var release = (os.release.match(/(^11|^12)/) || [null])[0];
+        if (release) {
+            return "suse" + release;
         }
         else {
             this.debug("using legacy release");
+            return '';
         }
-        return name;
     };
     MongoDBPlatform.prototype.getUbuntuVersionString = function (os) {
         var name = "ubuntu";
