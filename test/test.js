@@ -76,16 +76,37 @@ describe('MongoDBDownload class', function() {
         });
     });
     
-    it('should return a link to md5 content', function(done){
+    it('should return a link to md5 URI', function(done){
         let mongoDBDownload = new MongoDBDownload({});
         mongoDBDownload.getDownloadURIMD5().then((location) => {
             expect(location).to.be.an("string");
             done();
         });
     });
+    it('should return md5 cache file', function(done){
+        let mongoDBDownload = new MongoDBDownload({});
+        mongoDBDownload.getMD5HashFileLocation().then((md5File) => {
+            expect(md5File).to.be.an("string");
+            done();
+        });
+    }); 
     it('should return a link to md5 content', function(done){
         let mongoDBDownload = new MongoDBDownload({});
         mongoDBDownload.getMD5Hash().then((md5) => {
+            expect(md5).to.be.an("string");
+            done();
+        });
+    });  
+    it('should return md5 hash online', function(done){
+        let mongoDBDownload = new MongoDBDownload({});
+        mongoDBDownload.getMD5HashOnline().then((md5) => {
+            expect(md5).to.be.an("string");
+            done();
+        });
+    });
+    it('should return md5 cached hash', function(done){
+        let mongoDBDownload = new MongoDBDownload({});
+        mongoDBDownload.getMD5HashOffline().then((md5) => {
             expect(md5).to.be.an("string");
             done();
         });

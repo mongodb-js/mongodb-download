@@ -130,6 +130,8 @@ export class MongoDBDownload {
               decompress(mongoDBArchive, extractLocation).then((files: any) => {
                 this.debug(`extract(): ${extractLocation}`);
                 resolve(extractLocation);
+              }, (e: any) => {
+                this.debug('extract() failed', extractLocation, e);
               });
             });  
           }
@@ -213,8 +215,50 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
+ getMD5HashFileLocation(): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      this.getDownloadLocation().then((downloadLocation: string) => {
+        let md5HashLocation: string = `${downloadLocation}.md5`;
+        resolve(md5HashLocation);
+      }, (e) => {
+        console.error("error @ getMD5HashFileLocation", e);
+        reject(e);
+      });
+    });
+  }
+
+  cacheMD5Hash(signature: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.getMD5HashFileLocation().then((hashFile: string) => {
+        fs.outputFile(hashFile, signature, (err: any) => {
+          if ( err ) {
+            this.debug('@cacheMD5Hash unable to save signature', signature);
+            reject();
+          } else {
+            resolve();
+          }
+        });
+      });
+    });
+  }
+
   getMD5Hash(): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        this.getMD5HashOffline().then((signature: string) => {
+          resolve(signature);
+        }, (e: any) => {
+          this.getMD5HashOnline().then((signature: string) => {
+            resolve(signature);
+          }, (e: any) => {
+            console.error('unable to get signature content', e);
+            reject(e);
+          });
+        });
+    });
+  }
+
+  getMD5HashOnline(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.getDownloadURIMD5().then((md5URL) => {
         request(md5URL).then((signatureContent: string) => {
@@ -222,10 +266,26 @@ export class MongoDBDownload {
           let signatureMatch: string[] = signatureContent.match(/(.*?)\s/);
           let signature: string = signatureMatch[1];
           this.debug(`getDownloadMD5Hash: ${signature}`);
+          this.cacheMD5Hash(signature).then(() => {}, () => {});
           resolve(signature);
         }, (e: any) => {
           console.error('unable to get signature content', e);
           reject(e);
+        });
+      })
+    });
+  }
+
+  getMD5HashOffline(): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      this.getMD5HashFileLocation().then((hashFile: string) => {
+        fs.readFile(hashFile, 'utf8', (err: any, signature: string) => {
+          if ( err ) {
+            this.debug('error @ getMD5HashOffline, unable to read hash content', hashFile);
+            reject();
+          } else {
+            resolve(signature);
+          }
         });
       });
     });
@@ -273,7 +333,7 @@ export class MongoDBDownload {
     let exists: boolean;
     try {
       let stats: any = fs.lstatSync(location);
-      this.debug("sending file from cache");
+      this.debug("sending file from cache", location);
       exists = true;
     } catch (e) {
       if (e.code !== "ENOENT") throw e;
