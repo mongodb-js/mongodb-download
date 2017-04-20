@@ -190,6 +190,7 @@ var MongoDBDownload = (function () {
         return new Promise(function (resolve, reject) {
             _this.getDownloadLocation().then(function (downloadLocation) {
                 var md5HashLocation = downloadLocation + ".md5";
+                _this.debug("@getMD5HashFileLocation resolving md5HashLocation: " + md5HashLocation);
                 resolve(md5HashLocation);
             }, function (e) {
                 console.error("error @ getMD5HashFileLocation", e);
@@ -216,11 +217,13 @@ var MongoDBDownload = (function () {
     MongoDBDownload.prototype.getMD5Hash = function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
-            _this.getMD5HashOffline().then(function (signature) {
-                resolve(signature);
+            _this.getMD5HashOffline().then(function (offlineSignature) {
+                _this.debug("@getMD5Hash resolving offlineSignature " + offlineSignature);
+                resolve(offlineSignature);
             }, function (e) {
-                _this.getMD5HashOnline().then(function (signature) {
-                    resolve(signature);
+                _this.getMD5HashOnline().then(function (onlineSignature) {
+                    _this.debug("@getMD5Hash resolving onlineSignature: " + onlineSignature);
+                    resolve(onlineSignature);
                 }, function (e) {
                     console.error('unable to get signature content', e);
                     reject(e);
@@ -236,9 +239,13 @@ var MongoDBDownload = (function () {
                     _this.debug("getDownloadMD5Hash content: " + signatureContent);
                     var signatureMatch = signatureContent.match(/(.*?)\s/);
                     var signature = signatureMatch[1];
-                    _this.debug("getDownloadMD5Hash: " + signature);
-                    _this.cacheMD5Hash(signature).then(function () { }, function () { });
-                    resolve(signature);
+                    _this.debug("getDownloadMD5Hash extracted signature: " + signature);
+                    _this.cacheMD5Hash(signature).then(function () {
+                        resolve(signature);
+                    }, function (e) {
+                        _this.debug('@getMD5HashOnline erorr', e);
+                        reject();
+                    });
                 }, function (e) {
                     console.error('unable to get signature content', e);
                     reject(e);
@@ -274,6 +281,7 @@ var MongoDBDownload = (function () {
                 fileStream.on('finish', function () {
                     fileStream.close(function () {
                         fs.renameSync(tempDownloadLocation, downloadLocation);
+                        _this.debug("renamed " + tempDownloadLocation + " to " + downloadLocation);
                         resolve(downloadLocation);
                     });
                 });
