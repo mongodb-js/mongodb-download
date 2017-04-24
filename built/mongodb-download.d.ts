@@ -35,7 +35,11 @@ export declare class MongoDBDownload {
     download(): Promise<string>;
     isDownloadPresent(): Promise<boolean>;
     isExtractPresent(): Promise<boolean>;
+    getMD5HashFileLocation(): Promise<string>;
+    cacheMD5Hash(signature: string): Promise<void>;
     getMD5Hash(): Promise<string>;
+    getMD5HashOnline(): Promise<string>;
+    getMD5HashOffline(): Promise<string>;
     httpDownload(httpOptions: any, downloadLocation: string, tempDownloadLocation: string): Promise<string>;
     getCrReturn(): string;
     locationExists(location: string): boolean;

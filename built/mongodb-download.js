@@ -100,6 +100,8 @@ var MongoDBDownload = (function () {
                             decompress(mongoDBArchive, extractLocation).then(function (files) {
                                 _this.debug("extract(): " + extractLocation);
                                 resolve(extractLocation);
+                            }, function (e) {
+                                _this.debug('extract() failed', extractLocation, e);
                             });
                         });
                     }
@@ -183,7 +185,53 @@ var MongoDBDownload = (function () {
             });
         });
     };
+    MongoDBDownload.prototype.getMD5HashFileLocation = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getDownloadLocation().then(function (downloadLocation) {
+                var md5HashLocation = downloadLocation + ".md5";
+                _this.debug("@getMD5HashFileLocation resolving md5HashLocation: " + md5HashLocation);
+                resolve(md5HashLocation);
+            }, function (e) {
+                console.error("error @ getMD5HashFileLocation", e);
+                reject(e);
+            });
+        });
+    };
+    MongoDBDownload.prototype.cacheMD5Hash = function (signature) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getMD5HashFileLocation().then(function (hashFile) {
+                fs.outputFile(hashFile, signature, function (err) {
+                    if (err) {
+                        _this.debug('@cacheMD5Hash unable to save signature', signature);
+                        reject();
+                    }
+                    else {
+                        resolve();
+                    }
+                });
+            });
+        });
+    };
     MongoDBDownload.prototype.getMD5Hash = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getMD5HashOffline().then(function (offlineSignature) {
+                _this.debug("@getMD5Hash resolving offlineSignature " + offlineSignature);
+                resolve(offlineSignature);
+            }, function (e) {
+                _this.getMD5HashOnline().then(function (onlineSignature) {
+                    _this.debug("@getMD5Hash resolving onlineSignature: " + onlineSignature);
+                    resolve(onlineSignature);
+                }, function (e) {
+                    console.error('unable to get signature content', e);
+                    reject(e);
+                });
+            });
+        });
+    };
+    MongoDBDownload.prototype.getMD5HashOnline = function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
             _this.getDownloadURIMD5().then(function (md5URL) {
@@ -191,11 +239,32 @@ var MongoDBDownload = (function () {
                     _this.debug("getDownloadMD5Hash content: " + signatureContent);
                     var signatureMatch = signatureContent.match(/(.*?)\s/);
                     var signature = signatureMatch[1];
-                    _this.debug("getDownloadMD5Hash: " + signature);
-                    resolve(signature);
+                    _this.debug("getDownloadMD5Hash extracted signature: " + signature);
+                    _this.cacheMD5Hash(signature).then(function () {
+                        resolve(signature);
+                    }, function (e) {
+                        _this.debug('@getMD5HashOnline erorr', e);
+                        reject();
+                    });
                 }, function (e) {
                     console.error('unable to get signature content', e);
                     reject(e);
+                });
+            });
+        });
+    };
+    MongoDBDownload.prototype.getMD5HashOffline = function () {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.getMD5HashFileLocation().then(function (hashFile) {
+                fs.readFile(hashFile, 'utf8', function (err, signature) {
+                    if (err) {
+                        _this.debug('error @ getMD5HashOffline, unable to read hash content', hashFile);
+                        reject();
+                    }
+                    else {
+                        resolve(signature);
+                    }
                 });
             });
         });
@@ -212,6 +281,7 @@ var MongoDBDownload = (function () {
                 fileStream.on('finish', function () {
                     fileStream.close(function () {
                         fs.renameSync(tempDownloadLocation, downloadLocation);
+                        _this.debug("renamed " + tempDownloadLocation + " to " + downloadLocation);
                         resolve(downloadLocation);
                     });
                 });
@@ -237,7 +307,7 @@ var MongoDBDownload = (function () {
         var exists;
         try {
             var stats = fs.lstatSync(location);
-            this.debug("sending file from cache");
+            this.debug("sending file from cache", location);
             exists = true;
         }
         catch (e) {

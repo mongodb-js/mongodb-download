@@ -1,10 +1,10 @@
 {
   "name": "mongodb-download",
-  "version": "2.1.6",
+  "version": "2.2.1",
   "description": "download mongodb prebuilt packages from mongodb",
-  "main": "built/mongodb-download.js",  
+  "main": "built/mongodb-download.js",
   "bin": "built/mongodb-download-cli.js",
-  "types": "built/mongodb-download.d.ts", 
+  "types": "built/mongodb-download.d.ts",
   "scripts": {
     "test": "mocha"
   },
@@ -32,9 +32,9 @@
     "fs-extra": "^2.0.0"
   },
   "devDependencies": {
-    "@types/node": "^6.0.58",
-    "mocha": "^3.2.0",
-    "chai": "^3.5.0"  
+    "@types/node": "^6.0.70",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0"
   },
   "homepage": "https://github.com/winfinit/mongodb-download#readme"
 }
