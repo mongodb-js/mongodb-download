@@ -530,7 +530,7 @@ var MongoDBPlatform = (function () {
     };
     MongoDBPlatform.prototype.getUbuntuVersionString = function (os) {
         var name = "ubuntu";
-        var ubuntu_version = os.release.split('.');
+        var ubuntu_version = os.release ? os.release.split('.') : '';
         var major_version = parseInt(ubuntu_version[0]);
         var minor_version = ubuntu_version[1];
         if (os.release === "12.04") {
