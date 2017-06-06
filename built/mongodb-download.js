@@ -59,10 +59,17 @@ var MongoDBDownload = (function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
             _this.getMD5Hash().then(function (hash) {
+                if (!hash) {
+                    console.error("hash is not returned @ getExtractLocation()");
+                    return reject();
+                }
                 var downloadDir = _this.getDownloadDir();
                 var extractLocation = path.resolve(downloadDir, hash);
                 _this.debug("getExtractLocation(): " + extractLocation);
                 resolve(extractLocation);
+            }, function (e) {
+                console.error('hash is not returned @ getExtractLocation()', e);
+                reject();
             });
         });
     };

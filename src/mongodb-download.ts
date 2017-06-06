@@ -90,10 +90,17 @@ export class MongoDBDownload {
   getExtractLocation(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.getMD5Hash().then((hash: string) => {
+        if (! hash) {
+          console.error("hash is not returned @ getExtractLocation()");
+          return reject();
+        }
         let downloadDir: string = this.getDownloadDir();
         let extractLocation: string = path.resolve(downloadDir, hash);
         this.debug(`getExtractLocation(): ${extractLocation}`);
         resolve(extractLocation);
+      }, (e) => {
+        console.error('hash is not returned @ getExtractLocation()', e);
+        reject();
       });
     });
   }
