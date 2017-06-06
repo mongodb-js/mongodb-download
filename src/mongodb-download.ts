@@ -562,7 +562,7 @@ export class MongoDBPlatform {
   
   getUbuntuVersionString(os: any): string {
     let name: string = "ubuntu";
-    let ubuntu_version: string[] = os.release.split('.');
+    let ubuntu_version: string[] = os.release ? os.release.split('.') : '';
     let major_version: number = parseInt(ubuntu_version[0]);
     let minor_version: string = ubuntu_version[1];
 
