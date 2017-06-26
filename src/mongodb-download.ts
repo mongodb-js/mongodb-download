@@ -514,7 +514,7 @@ export class MongoDBPlatform {
   
   getDebianVersionString(os: any): string {
     let name: string = "debian";
-    if (/^(7|8)/.test(os.release)) {
+    if (/^[7-9]+/.test(os.release)) {
       name += "71";
     } else {
       this.debug("using legacy release");
