@@ -9,7 +9,7 @@ const decompress: any = require('decompress');
 const request: any = require('request-promise');
 const md5File: any = require('md5-file');
 
-const DOWNLOAD_URI: string = "https://fastdl.mongodb.org";
+const DOWNLOAD_URI: string = "https://www.mongodb.org/dl/linux/";
 const MONGODB_VERSION: string = "latest";
 
 export interface IMongoDBDownloadOptions {
