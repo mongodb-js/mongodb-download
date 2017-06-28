@@ -511,10 +511,13 @@ export class MongoDBPlatform {
       });
     });    
   }
-  
+
   getDebianVersionString(os: any): string {
     let name: string = "debian";
-    if (/^(7|8)/.test(os.release)) {
+    let release: number = parseFloat(os.release);
+    if (release >= 8.1) {
+      name += "81";
+    } else if (release >= 7.1) {
       name += "71";
     } else {
       this.debug("using legacy release");
