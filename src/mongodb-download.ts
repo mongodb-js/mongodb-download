@@ -318,7 +318,11 @@ export class MongoDBDownload {
         
         fileStream.on('finish', () => {
           fileStream.close(() => {
-            fs.renameSync(tempDownloadLocation, downloadLocation);
+            try {
+              fs.renameSync(tempDownloadLocation, downloadLocation);
+            } catch (err) {
+              this.debug(`The error was thrown while trying to rename: ${err}`);
+            }
             this.debug(`renamed ${tempDownloadLocation} to ${downloadLocation}`);
             resolve(downloadLocation);
           });
