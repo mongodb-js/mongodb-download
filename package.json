@@ -1,6 +1,6 @@
 {
   "name": "mongodb-download",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "description": "download mongodb prebuilt packages from mongodb",
   "main": "built/mongodb-download.js",
   "bin": "built/mongodb-download-cli.js",

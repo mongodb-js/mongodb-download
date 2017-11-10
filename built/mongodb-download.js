@@ -10,7 +10,7 @@ var url = require('url');
 var decompress = require('decompress');
 var request = require('request-promise');
 var md5File = require('md5-file');
-var DOWNLOAD_URI = "https://fastdl.mongodb.org";
+var DOWNLOAD_URI = "http://downloads.mongodb.org";
 var MONGODB_VERSION = "latest";
 var MongoDBDownload = (function () {
     function MongoDBDownload(_a) {
@@ -473,7 +473,11 @@ var MongoDBPlatform = (function () {
     };
     MongoDBPlatform.prototype.getDebianVersionString = function (os) {
         var name = "debian";
-        if (/^(7|8)/.test(os.release)) {
+        var release = parseFloat(os.release);
+        if (release >= 8.1) {
+            name += "81";
+        }
+        else if (release >= 7.1) {
             name += "71";
         }
         else {
@@ -568,7 +572,7 @@ var MongoDBPlatform = (function () {
                 return "win32";
             case "linux":
                 return "linux";
-            case "elementary OS":
+            case "elementary OS"://os.platform() doesn't return linux for elementary OS.
                 return "linux";
             case "sunos":
                 return "sunos5";
