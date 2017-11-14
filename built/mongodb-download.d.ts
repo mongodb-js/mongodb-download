@@ -1,3 +1,5 @@
+/// <reference types="node" />
+import { Url } from "url";
 export interface IMongoDBDownloadOptions {
     platform: string;
     arch: string;
@@ -34,6 +36,7 @@ export declare class MongoDBDownload {
     extract(): Promise<string>;
     download(): Promise<string>;
     isDownloadPresent(): Promise<boolean>;
+    checkMD5CheckSum(downloadLocation: string, downloadHash: string): Promise<boolean>;
     isExtractPresent(): Promise<boolean>;
     getMD5HashFileLocation(): Promise<string>;
     cacheMD5Hash(signature: string): Promise<void>;
@@ -45,8 +48,8 @@ export declare class MongoDBDownload {
     locationExists(location: string): boolean;
     printDownloadProgress(chunk: any): void;
     getHttpOptions(): Promise<any>;
-    getDownloadURI(): Promise<any>;
-    getDownloadURIMD5(): Promise<any>;
+    getDownloadURI(): Promise<Url>;
+    getDownloadURIMD5(): Promise<string>;
     createDownloadDir(): Promise<boolean>;
     getArchiveName(): Promise<string>;
 }
