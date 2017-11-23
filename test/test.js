@@ -1,9 +1,18 @@
-var expect = require('chai').expect;
+const path = require('path');
+const os = require('os');
+const expect = require('chai').expect;
+const rimraf = require('rimraf');
+
 let {MongoDBDownload} = require('../built/mongodb-download.js');
 
 
-
 describe('MongoDBDownload class', function() {
+
+    beforeEach(function(done) {
+        let downloadDir = path.resolve(os.tmpdir(), 'mongodb-download');
+        rimraf(downloadDir, done);
+    });
+
     it('should return a platform', function(){
         let mongoDBDownload = new MongoDBDownload({});
         expect(mongoDBDownload.getPlatform()).to.be.a("string");
