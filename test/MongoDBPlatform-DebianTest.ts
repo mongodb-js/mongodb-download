@@ -1,6 +1,6 @@
-const expect = require('chai').expect;
+import { expect } from 'chai';
 
-let {MongoDBPlatform} = require('../built/mongodb-download.js');
+import {MongoDBPlatform} from '../src/mongodb-download';
 
 
 describe('MongoDBPlatform class', () => {
@@ -9,7 +9,7 @@ describe('MongoDBPlatform class', () => {
 
         const mongoDBDownload = new MongoDBPlatform("linux", "x64");
 
-        let os = {
+        let os:any = {
             dist: "debian",
         };
 

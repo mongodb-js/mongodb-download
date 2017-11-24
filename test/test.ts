@@ -1,14 +1,13 @@
-const path = require('path');
-const os = require('os');
-const expect = require('chai').expect;
-const rimraf = require('rimraf');
+import * as path from 'path';
+import * as os from 'os';
+import * as rimraf from 'rimraf';
+import { expect } from 'chai';
 
-let {MongoDBDownload} = require('../built/mongodb-download.js');
-
+import {MongoDBDownload} from '../src/mongodb-download';
 
 describe('MongoDBDownload class', function() {
 
-    beforeEach(function(done) {
+    before(function(done) {
         let downloadDir = path.resolve(os.tmpdir(), 'mongodb-download');
         rimraf(downloadDir, done);
     });

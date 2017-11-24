@@ -1,1 +1,2 @@
 --timeout 120000
+--compilers ts:ts-node/register

@@ -34,11 +34,15 @@
     "yargs": "^10.0.3"
   },
   "devDependencies": {
+    "@types/chai": "^4.0.5",
+    "@types/mocha": "^2.2.44",
     "@types/node": "^6.0.70",
+    "@types/rimraf": "^2.0.2",
     "@types/yargs": "^8.0.2",
-    "chai": "^3.5.0",
+    "chai": "^4.1.2",
     "mocha": "^3.2.0",
     "rimraf": "^2.6.2",
+    "ts-node": "^3.3.0",
     "typescript": "^2.6.1"
   },
   "homepage": "https://github.com/winfinit/mongodb-download#readme"
