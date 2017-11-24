@@ -1,4 +1,5 @@
 # mongodb-download
+[![Build Status](https://travis-ci.org/winfinit/mongodb-download.svg?branch=master)](https://travis-ci.org/winfinit/mongodb-download)
 
 [![NPM](https://nodei.co/npm/mongodb-download.png)](https://nodei.co/npm/mongodb-download/)
 
