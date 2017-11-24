@@ -14,13 +14,8 @@ const decompress: any = require('decompress');
 const request: any = require('request-promise');
 const md5File: any = require('md5-file');
 
-const DOWNLOAD_URI: string = "http://downloads.mongodb.org";
+const DOWNLOAD_URI: string = "https://downloads.mongodb.org";
 const MONGODB_VERSION: string = "latest";
-
-const HTTP_PROTOCOLS = {
-  'http': http,
-  'https': https
-};
 
 export interface IMongoDBDownloadOptions {
   platform: string;
@@ -52,11 +47,11 @@ export class MongoDBDownload {
     http = {}
   }) {
     this.options = {
-      "platform": platform,
-      "arch": arch,
-      "downloadDir": downloadDir,
-      "version": version,
-      "http": http
+      platform,
+      arch,
+      downloadDir,
+      version,
+      http
     };
 
     this.debug = Debug('mongodb-download-MongoDBDownload');
@@ -297,10 +292,8 @@ export class MongoDBDownload {
   httpDownload(httpOptions: any, downloadLocation: string, tempDownloadLocation: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       let fileStream: any = fs.createWriteStream(tempDownloadLocation);
-
-      let protocol = httpOptions.protocol || 'https';
-      let httpProtocol = protocol === 'http' ? http : https;
-
+      let httpProtocol = httpOptions.protocol  === 'http:' ? http : https;
+      
       let request: any = httpProtocol.get(httpOptions, (response: any) => {
         this.downloadProgress.current = 0;
         this.downloadProgress.length = parseInt(response.headers['content-length'], 10);
@@ -369,7 +362,6 @@ export class MongoDBDownload {
     let downloadURI = await this.getDownloadURI();
     this.options.http.protocol = downloadURI.protocol;
     this.options.http.hostname = downloadURI.hostname;
-    downloadURI.protocol = this.options.http.protocol || 'https';
     this.options.http.path = downloadURI.path;
     this.debug("getHttpOptions", this.options.http);
     return this.options.http;

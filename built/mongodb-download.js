@@ -46,21 +46,17 @@ var url = require('url');
 var decompress = require('decompress');
 var request = require('request-promise');
 var md5File = require('md5-file');
-var DOWNLOAD_URI = "http://downloads.mongodb.org";
+var DOWNLOAD_URI = "https://downloads.mongodb.org";
 var MONGODB_VERSION = "latest";
-var HTTP_PROTOCOLS = {
-    'http': http,
-    'https': https
-};
 var MongoDBDownload = /** @class */ (function () {
     function MongoDBDownload(_a) {
         var _b = _a.platform, platform = _b === void 0 ? os.platform() : _b, _c = _a.arch, arch = _c === void 0 ? os.arch() : _c, _d = _a.downloadDir, downloadDir = _d === void 0 ? os.tmpdir() : _d, _e = _a.version, version = _e === void 0 ? MONGODB_VERSION : _e, _f = _a.http, http = _f === void 0 ? {} : _f;
         this.options = {
-            "platform": platform,
-            "arch": arch,
-            "downloadDir": downloadDir,
-            "version": version,
-            "http": http
+            platform: platform,
+            arch: arch,
+            downloadDir: downloadDir,
+            version: version,
+            http: http
         };
         this.debug = Debug('mongodb-download-MongoDBDownload');
         this.mongoDBPlatform = new MongoDBPlatform(this.getPlatform(), this.getArch());
@@ -404,8 +400,7 @@ var MongoDBDownload = /** @class */ (function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
             var fileStream = fs.createWriteStream(tempDownloadLocation);
-            var protocol = httpOptions.protocol || 'https';
-            var httpProtocol = protocol === 'http' ? http : https;
+            var httpProtocol = httpOptions.protocol === 'http:' ? http : https;
             var request = httpProtocol.get(httpOptions, function (response) {
                 _this.downloadProgress.current = 0;
                 _this.downloadProgress.length = parseInt(response.headers['content-length'], 10);
@@ -471,7 +466,6 @@ var MongoDBDownload = /** @class */ (function () {
                         downloadURI = _a.sent();
                         this.options.http.protocol = downloadURI.protocol;
                         this.options.http.hostname = downloadURI.hostname;
-                        downloadURI.protocol = this.options.http.protocol || 'https';
                         this.options.http.path = downloadURI.path;
                         this.debug("getHttpOptions", this.options.http);
                         return [2 /*return*/, this.options.http];
