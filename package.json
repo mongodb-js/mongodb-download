@@ -6,8 +6,9 @@
   "bin": "built/mongodb-download-cli.js",
   "types": "built/mongodb-download.d.ts",
   "scripts": {
-    "test": "npm run build && mocha",
-    "build": "tsc"
+    "test": "mocha",
+    "build": "node_modules/.bin/tsc",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
