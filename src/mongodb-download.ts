@@ -33,7 +33,7 @@ export class MongoDBDownload {
   mongoDBPlatform: MongoDBPlatform;
   downloadProgress: IMongoDBDownloadProgress;
   debug: any;
-  
+
   constructor( {
     platform = os.platform(),
     arch = os.arch(),
@@ -48,7 +48,7 @@ export class MongoDBDownload {
       "version": version,
       "http": http
     };
-    
+
     this.debug = Debug('mongodb-download-MongoDBDownload');
     this.mongoDBPlatform = new MongoDBPlatform(this.getPlatform(), this.getArch());
     this.options.downloadDir = path.resolve(this.options.downloadDir, 'mongodb-download');
@@ -59,23 +59,23 @@ export class MongoDBDownload {
       lastStdout: ""
     }
   }
-  
+
   getPlatform(): string {
     return this.options.platform;
   }
-  
+
   getArch(): string {
     return this.options.arch;
   }
-  
+
   getVersion(): string {
     return this.options.version;
   }
-  
+
   getDownloadDir(): string {
     return this.options.downloadDir;
   }
-  
+
   getDownloadLocation(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.getArchiveName().then((archiveName) => {
@@ -86,7 +86,7 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
   getExtractLocation(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.getMD5Hash().then((hash: string) => {
@@ -104,7 +104,7 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
   getTempDownloadLocation(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.getArchiveName().then((archiveName) => {
@@ -115,7 +115,7 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
   downloadAndExtract(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.download().then((archive: string) => {
@@ -125,7 +125,7 @@ export class MongoDBDownload {
       })
     });
   }
-  
+
   extract(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.getExtractLocation().then((extractLocation: string) => {
@@ -140,23 +140,23 @@ export class MongoDBDownload {
               }, (e: any) => {
                 this.debug('extract() failed', extractLocation, e);
               });
-            });  
+            });
           }
         });
       })
     });
   }
-  
+
   download(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      
+
       let httpOptionsPromise: Promise<string> = this.getHttpOptions();
       let downloadLocationPromise: Promise<string> = this.getDownloadLocation();
       let tempDownloadLocationPromise: Promise<string> = this.getTempDownloadLocation();
       let createDownloadDirPromise: Promise<boolean> = this.createDownloadDir();
-      
+
       Promise.all([
-      httpOptionsPromise, 
+      httpOptionsPromise,
       downloadLocationPromise,
       tempDownloadLocationPromise,
       createDownloadDirPromise
@@ -165,7 +165,7 @@ export class MongoDBDownload {
         let downloadLocation: string = values[1];
         let tempDownloadLocation: string = values[2];
         let downloadDirRes: boolean = values[3];
-        
+
         this.isDownloadPresent().then((isDownloadPresent: boolean) => {
           if ( isDownloadPresent === true ) {
             this.debug(`download(): ${downloadLocation}`);
@@ -182,7 +182,7 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
   // TODO: needs refactoring
   isDownloadPresent(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -209,7 +209,7 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
   isExtractPresent(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       this.getMD5Hash().then(downloadHash => {
@@ -304,18 +304,18 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
   httpDownload(httpOptions: any, downloadLocation: string, tempDownloadLocation: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       let fileStream: any = fs.createWriteStream(tempDownloadLocation);
-      
+
       let request: any = http.get(httpOptions, (response: any) => {
         this.downloadProgress.current = 0;
         this.downloadProgress.length = parseInt(response.headers['content-length'], 10);
         this.downloadProgress.total = Math.round(this.downloadProgress.length / 1048576 * 10) / 10;
-        
+
         response.pipe(fileStream);
-        
+
         fileStream.on('finish', () => {
           fileStream.close(() => {
             fs.renameSync(tempDownloadLocation, downloadLocation);
@@ -323,27 +323,27 @@ export class MongoDBDownload {
             resolve(downloadLocation);
           });
         });
-        
+
         response.on("data", (chunk: any) => {
           this.printDownloadProgress(chunk);
         });
-        
+
         request.on("error", (e: any) => {
           this.debug("request error:", e);
           reject(e);
         });
-      });  
+      });
     });
   }
-  
+
   getCrReturn(): string {
     if (this.mongoDBPlatform.getPlatform() === "win32") {
       return "\x1b[0G";
     } else {
       return "\r";
-    }    
+    }
   }
-  
+
   locationExists(location: string): boolean {
     let exists: boolean;
     try {
@@ -356,7 +356,7 @@ export class MongoDBDownload {
     }
     return exists;
   }
-  
+
   printDownloadProgress(chunk: any): void {
     let crReturn: string = this.getCrReturn();
     this.downloadProgress.current += chunk.length;
@@ -364,15 +364,15 @@ export class MongoDBDownload {
     100.0 * this.downloadProgress.current / this.downloadProgress.length * 10
     ) / 10 ;
     let mb_complete: number = Math.round(this.downloadProgress.current / 1048576 * 10) / 10;
-    let text_to_print: string = 
+    let text_to_print: string =
     `Completed: ${percent_complete} % (${mb_complete}mb / ${this.downloadProgress.total}mb${crReturn}`;
     if (this.downloadProgress.lastStdout !== text_to_print) {
       this.downloadProgress.lastStdout = text_to_print;
       process.stdout.write(text_to_print);
-    }    
+    }
   }
-  
-  
+
+
   getHttpOptions(): Promise<any> {
     return new Promise<string>((resolve, reject) => {
       this.getDownloadURI().then((downloadURI) => {
@@ -384,7 +384,7 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
   getDownloadURI(): Promise<any> {
     return new Promise<string>((resolve, reject) => {
       let downloadURL: string = `${DOWNLOAD_URI}/${this.mongoDBPlatform.getPlatform()}`;
@@ -396,7 +396,7 @@ export class MongoDBDownload {
       });
     });
   }
-  
+
   getDownloadURIMD5(): Promise<any> {
     return new Promise<string>((resolve, reject) => {
       this.getDownloadURI().then((downloadURI: any) => {
@@ -406,7 +406,7 @@ export class MongoDBDownload {
       })
     });
   }
-  
+
   createDownloadDir(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
         let dirToCreate: string = this.getDownloadDir();
@@ -422,15 +422,15 @@ export class MongoDBDownload {
         });
     });
   }
-  
-  
+
+
   getArchiveName(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       //var name = "mongodb-" + mongo_platform + "-" + mongo_arch;
-      let name = "mongodb-" + 
+      let name = "mongodb-" +
       this.mongoDBPlatform.getPlatform() + "-" +
       this.mongoDBPlatform.getArch();
-      
+
       this.mongoDBPlatform.getOSVersionString().then(osString => {
         osString && (name += `-${osString}`);
       }, (error) => {
@@ -439,7 +439,7 @@ export class MongoDBDownload {
         name += `-${this.getVersion()}.${this.mongoDBPlatform.getArchiveType()}`;
         resolve(name);
       });
-    });  
+    });
   }
 }
 
@@ -448,21 +448,21 @@ export class MongoDBPlatform {
   platform: string;
   arch: string;
   debug: any;
-  
+
   constructor(platform: string, arch: string) {
     this.debug = Debug('mongodb-download-MongoDBPlatform');
     this.platform = this.translatePlatform(platform);
     this.arch = this.translateArch(arch, this.getPlatform());
   }
-  
+
   getPlatform(): string {
     return this.platform;
   }
-  
+
   getArch(): string {
     return this.arch;
   }
-  
+
   getArchiveType(): string {
     if ( this.getPlatform() === "win32" ) {
       return "zip";
@@ -470,12 +470,12 @@ export class MongoDBPlatform {
       return "tgz";
     }
   }
-  
+
   getCommonReleaseString(): string {
     let name: string = `mongodb-${this.getPlatform()}-${this.getArch()}`;
     return name;
   }
-  
+
   getOSVersionString(): Promise<string> {
     if ( this.getPlatform() === "linux" && this.getArch() !== "i686") {
       return this.getLinuxOSVersionString();
@@ -483,13 +483,13 @@ export class MongoDBPlatform {
       return this.getOtherOSVersionString();
     }
   }
-  
+
   getOtherOSVersionString(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       reject("");
     });
   }
-  
+
   getLinuxOSVersionString(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       getos((e: any, os: any) => {
@@ -507,15 +507,17 @@ export class MongoDBPlatform {
           resolve(this.getDebianVersionString(os));
         } else {
           reject("");
-        }  
+        }
       });
-    });    
+    });
   }
 
   getDebianVersionString(os: any): string {
     let name: string = "debian";
     let release: number = parseFloat(os.release);
-    if (release >= 8.1) {
+    if (release >= 9.2) {
+      name += "92";
+    } else if (release >= 8.1) {
       name += "81";
     } else if (release >= 7.1) {
       name += "71";
@@ -524,7 +526,7 @@ export class MongoDBPlatform {
     }
     return name;
   }
-  
+
   getFedoraVersionString(os: any): string {
     let name: string = "rhel";
     let fedora_version: number = parseInt(os.release);
@@ -539,7 +541,7 @@ export class MongoDBPlatform {
     }
     return name;
   }
-  
+
   getRhelVersionString(os: any): string {
     let name: string = "rhel";
     if (/^7/.test(os.release)) {
@@ -553,12 +555,12 @@ export class MongoDBPlatform {
     }
     return name;
   }
-  
+
   getElementaryOSVersionString(os: any): string {
     let name: string = "ubuntu1404";
     return name;
   }
-  
+
   getSuseVersionString(os: any): string {
     let [release]: [string | null] = os.release.match(/(^11|^12)/) || [null];
 
@@ -569,7 +571,7 @@ export class MongoDBPlatform {
       return '';
     }
   }
-  
+
   getUbuntuVersionString(os: any): string {
     let name: string = "ubuntu";
     let ubuntu_version: string[] = os.release ? os.release.split('.') : '';
@@ -597,8 +599,8 @@ export class MongoDBPlatform {
     }
     return name;
   }
-  
-  
+
+
   translatePlatform(platform: string): string {
     switch (platform) {
       case "darwin":
@@ -616,7 +618,7 @@ export class MongoDBPlatform {
       throw new Error(`unsupported OS ${platform}`);
     }
   }
-  
+
   translateArch(arch: string, mongoPlatform: string): string {
     if (arch === "ia32") {
       if (mongoPlatform === "linux") {
@@ -634,5 +636,5 @@ export class MongoDBPlatform {
       throw new Error("unsupported architecture, ia32 and x64 are the only valid options");
     }
   }
-  
+
 }

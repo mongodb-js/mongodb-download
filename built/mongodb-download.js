@@ -474,7 +474,10 @@ var MongoDBPlatform = (function () {
     MongoDBPlatform.prototype.getDebianVersionString = function (os) {
         var name = "debian";
         var release = parseFloat(os.release);
-        if (release >= 8.1) {
+        if (release >= 9.2) {
+            name += "92";
+        }
+        else if (release >= 8.1) {
             name += "81";
         }
         else if (release >= 7.1) {
