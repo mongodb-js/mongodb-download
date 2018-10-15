@@ -5,11 +5,12 @@ const path: any = require('path');
 const Debug: any = require('debug');
 const getos: any = require('getos');
 const url: any = require('url');
+const semver: any = require('semver');
 const decompress: any = require('decompress');
 const request: any = require('request-promise');
 const md5File: any = require('md5-file');
 
-const DOWNLOAD_URI: string = "https://downloads.mongodb.org";
+const DOWNLOAD_URI: string = "https://fastdl.mongodb.org";
 const MONGODB_VERSION: string = "latest";
 
 export interface IMongoDBDownloadOptions {
@@ -273,7 +274,7 @@ export class MongoDBDownload {
       this.getDownloadURIMD5().then((md5URL) => {
         request(md5URL).then((signatureContent: string) => {
           this.debug(`getDownloadMD5Hash content: ${signatureContent}`);
-          let signatureMatch: string[] = signatureContent.match(/(.*?)\s/);
+          let signatureMatch: string[] = signatureContent.match(/([^\s]*)(\s*|$)/);
           let signature: string = signatureMatch[1];
           this.debug(`getDownloadMD5Hash extracted signature: ${signature}`);
           this.cacheMD5Hash(signature).then(() => {
@@ -427,10 +428,27 @@ export class MongoDBDownload {
   getArchiveName(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       //var name = "mongodb-" + mongo_platform + "-" + mongo_arch;
-      let name = "mongodb-" + 
-      this.mongoDBPlatform.getPlatform() + "-" +
-      this.mongoDBPlatform.getArch();
-      
+      let platform: string = this.mongoDBPlatform.getPlatform();
+      let arch: string = this.mongoDBPlatform.getArch();
+      let version: string = this.getVersion();
+
+      switch (platform) {
+        case 'osx':
+          if ((version === 'latest') || semver.satisfies(version, '>=3.5')) {
+             platform = `${platform}-ssl`;
+          }
+          break;
+        case 'win32':
+          // TODO: '2012plus' for 4.x and above
+          if ((version === 'latest') || semver.satisfies(version, '>=3.5')) {
+             arch = `${arch}-2008plus-ssl`;
+          }
+          break;
+        default:
+          break;
+      }
+      let name: string = `mongodb-${platform}-${arch}`;
+
       this.mongoDBPlatform.getOSVersionString().then(osString => {
         osString && (name += `-${osString}`);
       }, (error) => {
@@ -506,6 +524,7 @@ export class MongoDBPlatform {
         } else if (/debian/i.test(os.dist)) {
           resolve(this.getDebianVersionString(os));
         } else {
+          // TODO: 'legacy', 'static'
           reject("");
         }  
       });
@@ -520,6 +539,7 @@ export class MongoDBPlatform {
     } else if (release >= 7.1) {
       name += "71";
     } else {
+      // TODO: 'debian92'
       this.debug("using legacy release");
     }
     return name;
@@ -549,6 +569,7 @@ export class MongoDBPlatform {
     } else if (/^5/.test(os.release)) {
       name += "55";
     } else {
+      // TODO: 'rhel57'
       this.debug("using legacy release");
     }
     return name;
