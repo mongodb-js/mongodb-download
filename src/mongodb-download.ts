@@ -540,7 +540,6 @@ export class MongoDBPlatform {
     } else if (release >= 7.1) {
       name += "71";
     } else {
-      // TODO: 'debian92'
       this.debug("using legacy release");
     }
     return name;
