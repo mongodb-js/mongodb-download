@@ -16,7 +16,7 @@ export declare class MongoDBDownload {
     mongoDBPlatform: MongoDBPlatform;
     downloadProgress: IMongoDBDownloadProgress;
     debug: any;
-    constructor({platform, arch, downloadDir, version, http}: {
+    constructor({ platform, arch, downloadDir, version, http }: {
         platform?: any;
         arch?: any;
         downloadDir?: any;

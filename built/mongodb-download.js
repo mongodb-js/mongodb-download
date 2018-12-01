@@ -7,12 +7,13 @@ var path = require('path');
 var Debug = require('debug');
 var getos = require('getos');
 var url = require('url');
+var semver = require('semver');
 var decompress = require('decompress');
 var request = require('request-promise');
 var md5File = require('md5-file');
-var DOWNLOAD_URI = "https://downloads.mongodb.org";
+var DOWNLOAD_URI = "https://fastdl.mongodb.org";
 var MONGODB_VERSION = "latest";
-var MongoDBDownload = (function () {
+var MongoDBDownload = /** @class */ (function () {
     function MongoDBDownload(_a) {
         var _b = _a.platform, platform = _b === void 0 ? os.platform() : _b, _c = _a.arch, arch = _c === void 0 ? os.arch() : _c, _d = _a.downloadDir, downloadDir = _d === void 0 ? os.tmpdir() : _d, _e = _a.version, version = _e === void 0 ? MONGODB_VERSION : _e, _f = _a.http, http = _f === void 0 ? {} : _f;
         this.options = {
@@ -244,7 +245,7 @@ var MongoDBDownload = (function () {
             _this.getDownloadURIMD5().then(function (md5URL) {
                 request(md5URL).then(function (signatureContent) {
                     _this.debug("getDownloadMD5Hash content: " + signatureContent);
-                    var signatureMatch = signatureContent.match(/(.*?)\s/);
+                    var signatureMatch = signatureContent.match(/([^\s]*)(\s*|$)/);
                     var signature = signatureMatch[1];
                     _this.debug("getDownloadMD5Hash extracted signature: " + signature);
                     _this.cacheMD5Hash(signature).then(function () {
@@ -389,10 +390,25 @@ var MongoDBDownload = (function () {
     MongoDBDownload.prototype.getArchiveName = function () {
         var _this = this;
         return new Promise(function (resolve, reject) {
-            //var name = "mongodb-" + mongo_platform + "-" + mongo_arch;
-            var name = "mongodb-" +
-                _this.mongoDBPlatform.getPlatform() + "-" +
-                _this.mongoDBPlatform.getArch();
+            var platform = _this.mongoDBPlatform.getPlatform();
+            var arch = _this.mongoDBPlatform.getArch();
+            var version = _this.getVersion();
+            switch (platform) {
+                case 'osx':
+                    if ((version === 'latest') || semver.satisfies(version, '>=3.5')) {
+                        platform = platform + "-ssl";
+                    }
+                    break;
+                case 'win32':
+                    // TODO: '2012plus' for 4.x and above
+                    if ((version === 'latest') || semver.satisfies(version, '>=3.5')) {
+                        arch = arch + "-2008plus-ssl";
+                    }
+                    break;
+                default:
+                    break;
+            }
+            var name = "mongodb-" + platform + "-" + arch;
             _this.mongoDBPlatform.getOSVersionString().then(function (osString) {
                 osString && (name += "-" + osString);
             }, function (error) {
@@ -406,7 +422,7 @@ var MongoDBDownload = (function () {
     return MongoDBDownload;
 }());
 exports.MongoDBDownload = MongoDBDownload;
-var MongoDBPlatform = (function () {
+var MongoDBPlatform = /** @class */ (function () {
     function MongoDBPlatform(platform, arch) {
         this.debug = Debug('mongodb-download-MongoDBPlatform');
         this.platform = this.translatePlatform(platform);
@@ -466,6 +482,7 @@ var MongoDBPlatform = (function () {
                     resolve(_this.getDebianVersionString(os));
                 }
                 else {
+                    // TODO: 'legacy', 'static'
                     reject("");
                 }
             });
@@ -517,6 +534,7 @@ var MongoDBPlatform = (function () {
             name += "55";
         }
         else {
+            // TODO: 'rhel57'
             this.debug("using legacy release");
         }
         return name;
@@ -556,6 +574,9 @@ var MongoDBPlatform = (function () {
         else if (os.release === "16.04") {
             name += "1604";
         }
+        else if (os.release === "18.04") {
+            name += "1804";
+        }
         else if (major_version === 16) {
             // default for major 16 to 1604
             name += "1604";
@@ -575,7 +596,7 @@ var MongoDBPlatform = (function () {
                 return "win32";
             case "linux":
                 return "linux";
-            case "elementary OS"://os.platform() doesn't return linux for elementary OS.
+            case "elementary OS": //os.platform() doesn't return linux for elementary OS.
                 return "linux";
             case "sunos":
                 return "sunos5";
