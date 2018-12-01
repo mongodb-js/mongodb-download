@@ -608,6 +608,8 @@ export class MongoDBPlatform {
       name += "1404";
     } else if (os.release === "16.04") {
       name += "1604";
+    } else if (os.release === "18.04") {
+      name += "1804";
     } else if (major_version === 16) {
       // default for major 16 to 1604
       name += "1604";
