@@ -532,12 +532,13 @@ export class MongoDBPlatform {
 
   getDebianVersionString(os: any): string {
     let name: string = "debian";
-    let release: number = parseFloat(os.release);
-    if (release >= 9.2) {
+    let major_release: number = parseInt(os.release.split('.')[0]);
+    let minor_release: number = parseInt(os.release.split('.')[1]);
+    if (major_release >= 9 && minor_release >= 2) {
       name += "92";
-    } else if (release >= 8.1) {
+    } else if ((major_release >= 8 && minor_release >= 1) || (major_release >= 9 && minor_release < 2)) {
       name += "81";
-    } else if (release >= 7.1) {
+    } else if ((major_release >= 7 && minor_release >= 1) || (major_release >= 8 && minor_release < 1)) {
       name += "71";
     } else {
       this.debug("using legacy release");

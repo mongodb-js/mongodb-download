@@ -612,6 +612,12 @@ const VARIATIONS = [
         os: { dist: 'debian', release: '8.1' },
         location: 'https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-debian81-latest.tgz',
     },
+    {
+        platform: 'linux',
+        version: 'latest',
+        os: { dist: 'debian', release: '9.11' },
+        location: 'https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-debian92-latest.tgz',
+    },
 ];
 
 
