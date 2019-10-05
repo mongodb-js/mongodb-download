@@ -48,5 +48,11 @@ describe('MongoDBPlatform class', () => {
             expect(mongoDBDownload.getDebianVersionString(os)).to.equal("debian81");
             done();
         });
+
+        it('should return a archive name for debian 9.11', done => {
+            os.release = "9.11";
+            expect(mongoDBDownload.getDebianVersionString(os)).to.equal("debian92");
+            done();
+        });
     })
 });

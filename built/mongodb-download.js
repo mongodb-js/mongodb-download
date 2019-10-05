@@ -490,14 +490,15 @@ var MongoDBPlatform = /** @class */ (function () {
     };
     MongoDBPlatform.prototype.getDebianVersionString = function (os) {
         var name = "debian";
-        var release = parseFloat(os.release);
-        if (release >= 9.2) {
+        var major_release = parseInt(os.release.split('.')[0]);
+        var minor_release = parseInt(os.release.split('.')[1]);
+        if (major_release >= 9 && minor_release >= 2) {
             name += "92";
         }
-        else if (release >= 8.1) {
+        else if ((major_release >= 8 && minor_release >= 1) || (major_release >= 9 && minor_release < 2)) {
             name += "81";
         }
-        else if (release >= 7.1) {
+        else if ((major_release >= 7 && minor_release >= 1) || (major_release >= 8 && minor_release < 1)) {
             name += "71";
         }
         else {
