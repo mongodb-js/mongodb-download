@@ -433,8 +433,10 @@ export class MongoDBDownload {
 
       switch (platform) {
         case 'osx':
-          if ((version === 'latest') || semver.satisfies(version, '>=3.5')) {
-             platform = `${platform}-ssl`;
+          if (version === 'latest' || semver.satisfies(version, '>=4.2.0')) {
+            platform = 'macos';
+          } else if (semver.satisfies(version, '>=3.5')) {
+            platform = `${platform}-ssl`;
           }
           break;
         case 'win32':
