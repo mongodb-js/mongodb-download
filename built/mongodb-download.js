@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MongoDBPlatform = exports.MongoDBDownload = void 0;
 var os = require('os');
 var http = require('https');
 var fs = require('fs-extra');
@@ -395,7 +396,10 @@ var MongoDBDownload = /** @class */ (function () {
             var version = _this.getVersion();
             switch (platform) {
                 case 'osx':
-                    if ((version === 'latest') || semver.satisfies(version, '>=3.5')) {
+                    if (version === 'latest' || semver.satisfies(version, '>=4.2.0')) {
+                        platform = 'macos';
+                    }
+                    else if (semver.satisfies(version, '>=3.5')) {
                         platform = platform + "-ssl";
                     }
                     break;
