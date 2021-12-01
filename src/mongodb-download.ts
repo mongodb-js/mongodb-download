@@ -433,8 +433,10 @@ export class MongoDBDownload {
 
       switch (platform) {
         case 'osx':
-          if ((version === 'latest') || semver.satisfies(version, '>=3.5')) {
-             platform = `${platform}-ssl`;
+          if (version === 'latest' || semver.satisfies(version, '>=4.2.0')) {
+            platform = 'macos';
+          } else if (semver.satisfies(version, '>=3.5')) {
+            platform = `${platform}-ssl`;
           }
           break;
         case 'win32':
@@ -610,6 +612,8 @@ export class MongoDBPlatform {
       name += "1604";
     } else if (os.release === "18.04") {
       name += "1804";
+    } else if (os.release === "20.04") {
+      name += "2004";
     } else if (major_version === 16) {
       // default for major 16 to 1604
       name += "1604";
