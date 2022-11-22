@@ -35,6 +35,13 @@ var MongoDBDownload = /** @class */ (function () {
         };
     }
     MongoDBDownload.prototype.getPlatform = function () {
+        if (this.options.platform === "win32" && this.getArch() === 'x64') {
+            var version = this.getVersion();
+            if ((version === 'latest') || semver.satisfies(version, '>=4.4.0')) {
+                // https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-4.4.18.zip
+                return 'windows';
+            }
+        }
         return this.options.platform;
     };
     MongoDBDownload.prototype.getArch = function () {
@@ -405,7 +412,12 @@ var MongoDBDownload = /** @class */ (function () {
                     break;
                 case 'win32':
                     // TODO: '2012plus' for 4.x and above
-                    if ((version === 'latest') || semver.satisfies(version, '>=3.5')) {
+                    if ((version === 'latest') || semver.satisfies(version, '>4.0.28')) {
+                        // https://fastdl.mongodb.org/win32/mongodb-win32-x86_64-2012plus-4.2.23.zip
+                        arch = arch + "-2012plus";
+                    }
+                    else if (semver.satisfies(version, '>=3.5')) {
+                        // https://fastdl.mongodb.org/win32/mongodb-win32-x86_64-2008plus-ssl-4.0.28.zip
                         arch = arch + "-2008plus-ssl";
                     }
                     break;
@@ -439,7 +451,8 @@ var MongoDBPlatform = /** @class */ (function () {
         return this.arch;
     };
     MongoDBPlatform.prototype.getArchiveType = function () {
-        if (this.getPlatform() === "win32") {
+        var platform = this.getPlatform();
+        if (platform === "win32" || platform === "windows") {
             return "zip";
         }
         else {
@@ -601,6 +614,8 @@ var MongoDBPlatform = /** @class */ (function () {
                 return "osx";
             case "win32":
                 return "win32";
+            case "windows":
+                return "windows";
             case "linux":
                 return "linux";
             case "elementary OS": //os.platform() doesn't return linux for elementary OS.
@@ -617,7 +632,7 @@ var MongoDBPlatform = /** @class */ (function () {
             if (mongoPlatform === "linux") {
                 return "i686";
             }
-            else if (mongoPlatform === "win32") {
+            else if (mongoPlatform === "win32" || mongoPlatform === "windows") {
                 return "i386";
             }
             else {
