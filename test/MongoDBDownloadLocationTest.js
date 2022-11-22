@@ -32,12 +32,12 @@ const VARIATIONS = [
     {
         platform: 'darwin',
         version: 'latest',
-        location: 'https://fastdl.mongodb.org/osx/mongodb-osx-ssl-x86_64-latest.tgz',
+        location: 'https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-latest.tgz',
     },
     {
         platform: 'win32',
         version: 'latest',
-        location: 'https://fastdl.mongodb.org/win32/mongodb-win32-x86_64-2008plus-ssl-latest.zip',
+        location: 'https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-latest.zip',
     },
     {
         platform: 'linux',
@@ -335,7 +335,7 @@ const VARIATIONS = [
         platform: 'win32',
         arch: 'ia32',
         version: 'latest',
-        location: 'https://fastdl.mongodb.org/win32/mongodb-win32-i386-2008plus-ssl-latest.zip',
+        location: 'https://fastdl.mongodb.org/win32/mongodb-win32-i386-2012plus-latest.zip',
         isMissing: true,
     },
     {
